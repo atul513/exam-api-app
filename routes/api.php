@@ -8,11 +8,45 @@ use App\Http\Controllers\Api\Teacher\DashboardController as TeacherDashboard;
 use App\Http\Controllers\Api\Student\DashboardController as StudentDashboard;
 use App\Http\Controllers\Api\Parents\DashboardController as ParentDashboard;
 
+// Blog — Public
+use App\Http\Controllers\Api\Blog\BlogController;
+use App\Http\Controllers\Api\Blog\BlogCategoryController;
+use App\Http\Controllers\Api\Blog\BlogTagController;
+use App\Http\Controllers\Api\Blog\BlogCommentController;
+
+// Blog — Admin
+use App\Http\Controllers\Api\Admin\BlogController          as AdminBlogController;
+use App\Http\Controllers\Api\Admin\BlogCategoryController  as AdminBlogCategoryController;
+use App\Http\Controllers\Api\Admin\BlogTagController       as AdminBlogTagController;
+use App\Http\Controllers\Api\Admin\BlogCommentController   as AdminBlogCommentController;
+
 // ==================
 // PUBLIC ROUTES
 // ==================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// ==================
+// PUBLIC BLOG ROUTES
+// ==================
+Route::prefix('blogs')->group(function () {
+    Route::get('/',                      [BlogController::class, 'index']);
+    Route::get('/{slug}/related',        [BlogController::class, 'related']);
+    Route::get('/{slug}',                [BlogController::class, 'show']);
+    Route::get('/{slug}/comments',       [BlogCommentController::class, 'index']);
+    // Guest can post; auth optional (auto-approves authenticated users)
+    Route::post('/{slug}/comments',      [BlogCommentController::class, 'store']);
+});
+
+Route::prefix('blog-categories')->group(function () {
+    Route::get('/',        [BlogCategoryController::class, 'index']);
+    Route::get('/{slug}',  [BlogCategoryController::class, 'show']);
+});
+
+Route::prefix('blog-tags')->group(function () {
+    Route::get('/',        [BlogTagController::class, 'index']);
+    Route::get('/{slug}',  [BlogTagController::class, 'show']);
+});
 
 // ==================
 // PROTECTED ROUTES (need token)
@@ -38,6 +72,46 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard',  [AdminDashboard::class, 'index']);
         Route::get('/users',      [AdminDashboard::class, 'users']);
         Route::post('/users',     [AdminDashboard::class, 'createUser']);
+
+        // ── Blog Management ───────────────────────────────────────────────
+        Route::prefix('blogs')->group(function () {
+            Route::get('/',                [AdminBlogController::class, 'index']);
+            Route::post('/',               [AdminBlogController::class, 'store']);
+            Route::get('/{id}',            [AdminBlogController::class, 'show']);
+            Route::put('/{id}',            [AdminBlogController::class, 'update']);
+            Route::delete('/{id}',         [AdminBlogController::class, 'destroy']);
+            Route::post('/{id}/restore',   [AdminBlogController::class, 'restore']);
+            Route::delete('/{id}/force',   [AdminBlogController::class, 'forceDelete']);
+            Route::patch('/{id}/status',   [AdminBlogController::class, 'updateStatus']);
+            Route::patch('/{id}/featured', [AdminBlogController::class, 'toggleFeatured']);
+        });
+
+        // ── Blog Category Management ──────────────────────────────────────
+        Route::prefix('blog-categories')->group(function () {
+            Route::get('/',        [AdminBlogCategoryController::class, 'index']);
+            Route::post('/',       [AdminBlogCategoryController::class, 'store']);
+            Route::get('/{id}',    [AdminBlogCategoryController::class, 'show']);
+            Route::put('/{id}',    [AdminBlogCategoryController::class, 'update']);
+            Route::delete('/{id}', [AdminBlogCategoryController::class, 'destroy']);
+        });
+
+        // ── Blog Tag Management ───────────────────────────────────────────
+        Route::prefix('blog-tags')->group(function () {
+            Route::get('/',        [AdminBlogTagController::class, 'index']);
+            Route::post('/',       [AdminBlogTagController::class, 'store']);
+            Route::get('/{id}',    [AdminBlogTagController::class, 'show']);
+            Route::put('/{id}',    [AdminBlogTagController::class, 'update']);
+            Route::delete('/{id}', [AdminBlogTagController::class, 'destroy']);
+        });
+
+        // ── Blog Comment Moderation ───────────────────────────────────────
+        Route::prefix('blog-comments')->group(function () {
+            Route::get('/',                    [AdminBlogCommentController::class, 'index']);
+            Route::post('/bulk-status',        [AdminBlogCommentController::class, 'bulkUpdateStatus']);
+            Route::get('/{id}',                [AdminBlogCommentController::class, 'show']);
+            Route::patch('/{id}/status',       [AdminBlogCommentController::class, 'updateStatus']);
+            Route::delete('/{id}',             [AdminBlogCommentController::class, 'destroy']);
+        });
     });
 
     // ==================
