@@ -1,0 +1,134 @@
+<?php
+
+// ============================================================
+// PHASE 5: EXCEL BULK IMPORT (maatwebsite/excel)
+// ============================================================
+// Install: composer require maatwebsite/excel
+// Config:  php artisan vendor:publish --provider="Maatwebsite\Excel\ExcelServiceProvider" --tag=config
+
+
+// ─── app/Http/Controllers/Api/V1/QuestionImportController.php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Models\ImportBatch;
+use App\Jobs\ProcessQuestionImport;
+use App\Exports\ImportTemplateExport;
+use App\Exports\ImportErrorExport;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Maatwebsite\Excel\Facades\Excel;
+
+class QuestionImportController extends Controller
+{
+    /**
+     * POST /api/v1/questions/import
+     * Upload Excel file → queue processing.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file'    => 'required|file|mimes:xlsx,xls|max:20480', // 20MB
+            'dry_run' => 'nullable|boolean',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('imports/questions', 'local');
+
+        // Create batch record
+        $batch = ImportBatch::create([
+            'file_name'       => $file->getClientOriginalName(),
+            'file_path'       => $path,
+            'file_size_bytes' => $file->getSize(),
+            'status'          => 'pending',
+            'imported_by'     => $request->user()->id,
+        ]);
+
+        // Dispatch async job
+        ProcessQuestionImport::dispatch($batch, $request->boolean('dry_run'));
+
+        return response()->json([
+            'message'  => 'File uploaded. Processing started.',
+            'batch_id' => $batch->id,
+            'status'   => 'pending',
+        ], 202);
+    }
+
+    /**
+     * GET /api/v1/questions/import/{batch}/status
+     * Poll for import progress.
+     */
+    public function status(ImportBatch $batch): JsonResponse
+    {
+        return response()->json([
+            'batch_id'         => $batch->id,
+            'file_name'        => $batch->file_name,
+            'status'           => $batch->status->value,
+            'total_rows'       => $batch->total_rows,
+            'processed_rows'   => $batch->processed_rows,
+            'success_count'    => $batch->success_count,
+            'error_count'      => $batch->error_count,
+            'progress_percent' => $batch->progressPercent(),
+            'errors_preview'   => array_slice($batch->error_log ?? [], 0, 20),
+            'started_at'       => $batch->started_at?->toISOString(),
+            'completed_at'     => $batch->completed_at?->toISOString(),
+        ]);
+    }
+
+    /**
+     * GET /api/v1/questions/import/{batch}/errors?format=xlsx|json
+     */
+    public function errors(Request $request, ImportBatch $batch)
+    {
+        if ($request->query('format') === 'xlsx') {
+            return Excel::download(
+                new ImportErrorExport($batch),
+                "import-errors-{$batch->id}.xlsx"
+            );
+        }
+
+        return response()->json([
+            'batch_id' => $batch->id,
+            'errors'   => $batch->error_log,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/questions/import/batches
+     */
+    public function batches(Request $request): JsonResponse
+    {
+        $batches = ImportBatch::with('importer:id,name')
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->latest()
+            ->paginate(20);
+
+        return response()->json($batches);
+    }
+
+    /**
+     * DELETE /api/v1/questions/import/{batch}
+     * Rollback: delete all questions from this batch.
+     */
+    public function rollback(ImportBatch $batch): JsonResponse
+    {
+        $count = $batch->questions()->count();
+        $batch->questions()->delete();
+        $batch->update(['status' => 'failed', 'summary' => ['rolled_back' => true]]);
+
+        return response()->json([
+            'message' => "{$count} questions from this batch have been deleted.",
+        ]);
+    }
+
+    /**
+     * GET /api/v1/questions/import/template
+     * Download blank Excel template.
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new ImportTemplateExport, 'question-import-template.xlsx');
+    }
+}
+

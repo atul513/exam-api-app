@@ -20,6 +20,16 @@ use App\Http\Controllers\Api\Admin\BlogCategoryController  as AdminBlogCategoryC
 use App\Http\Controllers\Api\Admin\BlogTagController       as AdminBlogTagController;
 use App\Http\Controllers\Api\Admin\BlogCommentController   as AdminBlogCommentController;
 
+
+use App\Http\Controllers\Api\V1\{
+    SubjectController,
+    TopicController,
+    TagController,
+    QuestionController,
+    QuestionImportController,
+    QuestionStatsController,
+};
+
 // ==================
 // PUBLIC ROUTES
 // ==================
@@ -138,3 +148,37 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile',   [ParentDashboard::class, 'profile']);
     });
 });
+
+
+
+
+Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
+
+    // Taxonomy
+    Route::apiResource('subjects', SubjectController::class);
+    Route::get('subjects/{subject}/topics', [TopicController::class, 'index']);
+    Route::apiResource('topics', TopicController::class)->except(['index']);
+    Route::apiResource('tags', TagController::class)->only(['index', 'store', 'destroy']);
+
+    // Questions
+    Route::apiResource('questions', QuestionController::class);
+    Route::post('questions/{question}/clone', [QuestionController::class, 'clone']);
+    Route::post('questions/{question}/submit-review', [QuestionController::class, 'submitReview']);
+    Route::post('questions/{question}/approve', [QuestionController::class, 'approve']);
+    Route::post('questions/{question}/reject', [QuestionController::class, 'reject']);
+    Route::patch('questions/bulk-status', [QuestionController::class, 'bulkStatus']);
+
+    // Import
+    Route::post('questions/import', [QuestionImportController::class, 'upload']);
+    Route::get('questions/import/template', [QuestionImportController::class, 'downloadTemplate']);
+    Route::get('questions/import/{batch}/status', [QuestionImportController::class, 'status']);
+    Route::get('questions/import/{batch}/errors', [QuestionImportController::class, 'errors']);
+    Route::get('questions/import/batches', [QuestionImportController::class, 'batches']);
+    Route::delete('questions/import/{batch}', [QuestionImportController::class, 'rollback']);
+
+    // Stats & Search
+    Route::get('questions-stats', [QuestionStatsController::class, 'index']);
+    Route::get('questions-stats/aggregations', [QuestionStatsController::class, 'aggregations']);
+    Route::post('questions-search', [QuestionStatsController::class, 'advancedSearch']);
+});
+

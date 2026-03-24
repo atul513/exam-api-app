@@ -1,0 +1,1184 @@
+{
+	"info": {
+		"_postman_id": "qbank-api-2026",
+		"name": "Question Bank API",
+		"description": "Complete Question Bank Module API for Exam App.\n\nSetup:\n1. Set `base_url` variable to your Laravel server URL\n2. Run 'Login' request first to get auth token\n3. All other requests auto-attach the Bearer token\n\nCovers: Subjects, Topics, Tags, Questions (all 7 types), Import, Stats",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "subject_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "topic_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "question_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "tag_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "batch_id",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [""]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "🔐 Auth",
+			"description": "Authentication endpoints. Run Login first.",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"    console.log('Token saved: ' + jsonData.token.substring(0, 20) + '...');",
+									"}",
+									"pm.test('Login successful', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@example.com\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/user",
+							"host": ["{{base_url}}"],
+							"path": ["api", "user"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📚 Subjects",
+			"description": "Subject CRUD with question counts.",
+			"item": [
+				{
+					"name": "List All Subjects",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.length > 0) {",
+									"    pm.collectionVariables.set('subject_id', jsonData.data[0].id);",
+									"    console.log('subject_id set to: ' + jsonData.data[0].id);",
+									"}",
+									"pm.test('Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Has data array', function () {",
+									"    pm.expect(jsonData).to.have.property('data');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects?active_only=true",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects"],
+							"query": [
+								{ "key": "active_only", "value": "true" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Subject",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set('subject_id', jsonData.data.id);",
+									"}",
+									"pm.test('Status 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Physics\",\n    \"code\": \"PHY\",\n    \"description\": \"General Physics for competitive exams\",\n    \"sort_order\": 1,\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects"]
+						}
+					}
+				},
+				{
+					"name": "Get Subject Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Subject",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Physics (Updated)\",\n    \"description\": \"Updated description\",\n    \"sort_order\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Subject",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📂 Topics",
+			"description": "Topics nested under subjects. Supports tree and flat format.",
+			"item": [
+				{
+					"name": "List Topics (Flat — for dropdowns)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.length > 0) {",
+									"    pm.collectionVariables.set('topic_id', jsonData.data[0].id);",
+									"    console.log('topic_id set to: ' + jsonData.data[0].id);",
+									"}",
+									"pm.test('Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}/topics?active_only=true",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}", "topics"],
+							"query": [
+								{ "key": "active_only", "value": "true" }
+							]
+						}
+					}
+				},
+				{
+					"name": "List Topics (Tree — for sidebar)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}/topics?format=tree",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}", "topics"],
+							"query": [
+								{ "key": "format", "value": "tree" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Topic",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set('topic_id', jsonData.data.id);",
+									"}",
+									"pm.test('Status 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Newton's Laws of Motion\",\n    \"code\": \"NEWTON_LAWS\",\n    \"parent_topic_id\": null,\n    \"sort_order\": 1,\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}/topics",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}", "topics"]
+						}
+					}
+				},
+				{
+					"name": "Create Sub-Topic",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Newton's First Law (Inertia)\",\n    \"code\": \"NEWTON_FIRST\",\n    \"parent_topic_id\": {{topic_id}},\n    \"sort_order\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/subjects/{{subject_id}}/topics",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "subjects", "{{subject_id}}", "topics"]
+						}
+					}
+				},
+				{
+					"name": "Get Topic Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/topics/{{topic_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "topics", "{{topic_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Topic",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Newton's Laws (Updated)\",\n    \"sort_order\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/topics/{{topic_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "topics", "{{topic_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Topic",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/topics/{{topic_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "topics", "{{topic_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🏷️ Tags",
+			"description": "Manage question tags.",
+			"item": [
+				{
+					"name": "List Tags",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.length > 0) {",
+									"    pm.collectionVariables.set('tag_id', jsonData.data[0].id);",
+									"}",
+									"pm.test('Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tags?category=exam&search=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tags"],
+							"query": [
+								{ "key": "category", "value": "exam", "description": "Filter by category" },
+								{ "key": "search", "value": "", "description": "Search by name" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Tag",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set('tag_id', jsonData.data.id);",
+									"}",
+									"pm.test('Status 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"NEET 2025\",\n    \"slug\": \"neet-2025\",\n    \"category\": \"exam\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/tags",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tags"]
+						}
+					}
+				},
+				{
+					"name": "Delete Tag",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tags/{{tag_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "tags", "{{tag_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "❓ Questions — CRUD",
+			"description": "Core question CRUD operations.",
+			"item": [
+				{
+					"name": "List Questions (with filters)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.length > 0) {",
+									"    pm.collectionVariables.set('question_id', jsonData.data[0].id);",
+									"    console.log('question_id set to: ' + jsonData.data[0].id);",
+									"}",
+									"pm.test('Status 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"pm.test('Has pagination', function () {",
+									"    pm.expect(jsonData).to.have.property('pagination');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions?subject_id=&topic_id=&type=&difficulty=&status=&tags=&search=&language=&sort_by=created_at&sort_order=desc&page=1&per_page=25",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"],
+							"query": [
+								{ "key": "subject_id", "value": "", "description": "Filter by subject ID" },
+								{ "key": "topic_id", "value": "", "description": "Filter by topic ID" },
+								{ "key": "type", "value": "", "description": "CSV: mcq,true_false,fill_blank" },
+								{ "key": "difficulty", "value": "", "description": "CSV: easy,medium,hard,expert" },
+								{ "key": "status", "value": "", "description": "CSV: draft,review,approved,rejected,archived" },
+								{ "key": "tags", "value": "", "description": "CSV tag slugs: neet-2025,pyq" },
+								{ "key": "search", "value": "", "description": "Full-text search in question_text" },
+								{ "key": "language", "value": "", "description": "e.g. en, hi" },
+								{ "key": "sort_by", "value": "created_at", "description": "created_at, marks, difficulty, times_used" },
+								{ "key": "sort_order", "value": "desc", "description": "asc or desc" },
+								{ "key": "page", "value": "1" },
+								{ "key": "per_page", "value": "25", "description": "Max 100" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Question Detail",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Question",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Question History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}/history",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}", "history"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📝 Questions — Create (All 7 Types)",
+			"description": "One request per question type with complete sample body.",
+			"item": [
+				{
+					"name": "Create MCQ",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.id) {",
+									"    pm.collectionVariables.set('question_id', jsonData.data.id);",
+									"}",
+									"pm.test('Status 201', function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"pm.test('Type is mcq', function () {",
+									"    pm.expect(jsonData.data.type).to.eql('mcq');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"mcq\",\n    \"difficulty\": \"medium\",\n    \"question_text\": \"Which of Newton's laws explains why a ball rolling on a surface eventually stops?\",\n    \"marks\": 2,\n    \"negative_marks\": 0.5,\n    \"time_limit_sec\": 60,\n    \"options\": [\n        {\n            \"option_text\": \"First Law (Inertia)\",\n            \"is_correct\": false,\n            \"sort_order\": 0,\n            \"explanation\": \"First law is about inertia, not friction\"\n        },\n        {\n            \"option_text\": \"Second Law (F=ma)\",\n            \"is_correct\": true,\n            \"sort_order\": 1,\n            \"explanation\": \"Friction acts as unbalanced force, F=ma decelerates the ball\"\n        },\n        {\n            \"option_text\": \"Third Law (Action-Reaction)\",\n            \"is_correct\": false,\n            \"sort_order\": 2,\n            \"explanation\": \"Third law describes paired forces, not deceleration\"\n        },\n        {\n            \"option_text\": \"Law of Universal Gravitation\",\n            \"is_correct\": false,\n            \"sort_order\": 3,\n            \"explanation\": \"Gravitation pulls downward, doesn't stop horizontal motion\"\n        }\n    ],\n    \"explanation\": \"Friction is an unbalanced force. By Newton's second law F=ma, this net force decelerates the ball until velocity reaches zero.\",\n    \"solution_approach\": \"Step 1: Identify forces acting on the ball (gravity, normal, friction)\\nStep 2: Friction is unbalanced in horizontal direction\\nStep 3: Apply F=ma → a = friction/mass (negative)\\nStep 4: Ball decelerates to v=0\",\n    \"tags\": [\"neet-2025\", \"mechanics\", \"pyq\"],\n    \"language\": \"en\",\n    \"source\": \"NCERT Class 11, Ch 5\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Create Multi-Select",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Type is multi_select', function () { pm.expect(pm.response.json().data.type).to.eql('multi_select'); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"multi_select\",\n    \"difficulty\": \"hard\",\n    \"question_text\": \"Which of the following are renewable energy sources? (Select all that apply)\",\n    \"marks\": 4,\n    \"negative_marks\": 1,\n    \"options\": [\n        { \"option_text\": \"Solar Energy\", \"is_correct\": true, \"sort_order\": 0 },\n        { \"option_text\": \"Coal\", \"is_correct\": false, \"sort_order\": 1 },\n        { \"option_text\": \"Wind Energy\", \"is_correct\": true, \"sort_order\": 2 },\n        { \"option_text\": \"Natural Gas\", \"is_correct\": false, \"sort_order\": 3 },\n        { \"option_text\": \"Hydroelectric\", \"is_correct\": true, \"sort_order\": 4 }\n    ],\n    \"explanation\": \"Solar, Wind, and Hydroelectric are all renewable energy sources as they are naturally replenished.\",\n    \"tags\": [\"environment\", \"energy\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Create True/False",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Type is true_false', function () { pm.expect(pm.response.json().data.type).to.eql('true_false'); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"true_false\",\n    \"difficulty\": \"easy\",\n    \"question_text\": \"The mitochondria is known as the powerhouse of the cell.\",\n    \"marks\": 1,\n    \"negative_marks\": 0,\n    \"options\": [\n        { \"option_text\": \"True\", \"is_correct\": true, \"sort_order\": 0 },\n        { \"option_text\": \"False\", \"is_correct\": false, \"sort_order\": 1 }\n    ],\n    \"explanation\": \"Mitochondria produce ATP through cellular respiration, which is the main energy currency of the cell.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Create Short Answer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Type is short_answer', function () { pm.expect(pm.response.json().data.type).to.eql('short_answer'); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"short_answer\",\n    \"difficulty\": \"easy\",\n    \"question_text\": \"What is the chemical formula for water?\",\n    \"marks\": 1,\n    \"expected_answer\": {\n        \"answer_text\": \"H2O\",\n        \"keywords\": [\"H2O\", \"h2o\", \"H₂O\"]\n    },\n    \"explanation\": \"Water consists of two hydrogen atoms covalently bonded to one oxygen atom.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Create Long Answer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Type is long_answer', function () { pm.expect(pm.response.json().data.type).to.eql('long_answer'); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"long_answer\",\n    \"difficulty\": \"hard\",\n    \"question_text\": \"Explain the process of photosynthesis in detail, including both light-dependent and light-independent reactions.\",\n    \"marks\": 10,\n    \"expected_answer\": {\n        \"answer_text\": \"Photosynthesis is the process by which green plants, algae, and certain bacteria convert light energy into chemical energy stored in glucose. The process occurs in two main stages:\\n\\n1. Light-dependent reactions: Occur in the thylakoid membranes. Water molecules are split (photolysis), releasing O2. Light energy is captured by chlorophyll and converted to ATP and NADPH.\\n\\n2. Light-independent reactions (Calvin Cycle): Occur in the stroma. CO2 is fixed into G3P using ATP and NADPH from the light reactions. G3P is then used to synthesize glucose.\\n\\nOverall equation: 6CO2 + 6H2O + light → C6H12O6 + 6O2\",\n        \"keywords\": [\"chlorophyll\", \"thylakoid\", \"Calvin cycle\", \"ATP\", \"NADPH\", \"photolysis\", \"CO2 fixation\", \"glucose\", \"stroma\"],\n        \"min_words\": 150,\n        \"max_words\": 500,\n        \"rubric\": {\n            \"criteria\": [\n                { \"name\": \"Definition\", \"max_marks\": 2, \"description\": \"Clear definition of photosynthesis\" },\n                { \"name\": \"Light Reactions\", \"max_marks\": 3, \"description\": \"Explains light-dependent reactions accurately\" },\n                { \"name\": \"Calvin Cycle\", \"max_marks\": 3, \"description\": \"Explains dark reactions / Calvin cycle\" },\n                { \"name\": \"Equation\", \"max_marks\": 2, \"description\": \"Includes balanced chemical equation\" }\n            ]\n        }\n    },\n    \"explanation\": \"Full explanation with diagram references...\",\n    \"tags\": [\"biology\", \"botany\", \"neet-2025\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Create Fill in the Blank",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Type is fill_blank', function () { pm.expect(pm.response.json().data.type).to.eql('fill_blank'); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"fill_blank\",\n    \"difficulty\": \"medium\",\n    \"question_text\": \"The {{1}} is the largest planet in our solar system, and {{2}} is the smallest planet.\",\n    \"marks\": 2,\n    \"blanks\": [\n        {\n            \"blank_number\": 1,\n            \"correct_answers\": [\"Jupiter\", \"jupiter\"],\n            \"is_case_sensitive\": false\n        },\n        {\n            \"blank_number\": 2,\n            \"correct_answers\": [\"Mercury\", \"mercury\"],\n            \"is_case_sensitive\": false\n        }\n    ],\n    \"explanation\": \"Jupiter has a diameter of 139,820 km making it the largest. Mercury at 4,879 km is the smallest.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Create Match the Column",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Type is match_column', function () { pm.expect(pm.response.json().data.type).to.eql('match_column'); });"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"match_column\",\n    \"difficulty\": \"medium\",\n    \"question_text\": \"Match the following scientists with their discoveries:\",\n    \"marks\": 4,\n    \"negative_marks\": 0,\n    \"match_pairs\": [\n        {\n            \"column_a_text\": \"Isaac Newton\",\n            \"column_b_text\": \"Laws of Motion\",\n            \"sort_order\": 0\n        },\n        {\n            \"column_a_text\": \"Albert Einstein\",\n            \"column_b_text\": \"Theory of Relativity\",\n            \"sort_order\": 1\n        },\n        {\n            \"column_a_text\": \"Marie Curie\",\n            \"column_b_text\": \"Radioactivity\",\n            \"sort_order\": 2\n        },\n        {\n            \"column_a_text\": \"Charles Darwin\",\n            \"column_b_text\": \"Theory of Evolution\",\n            \"sort_order\": 3\n        }\n    ],\n    \"explanation\": \"Newton: 3 laws of motion (1687). Einstein: Special & General Relativity. Curie: Research on radioactivity, discovered Radium & Polonium. Darwin: On the Origin of Species (1859).\",\n    \"tags\": [\"general-science\", \"scientists\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Update Question (MCQ example)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"type\": \"mcq\",\n    \"difficulty\": \"hard\",\n    \"question_text\": \"[UPDATED] Which of Newton's laws explains why a ball rolling on a surface eventually stops?\",\n    \"marks\": 3,\n    \"negative_marks\": 1,\n    \"time_limit_sec\": 90,\n    \"options\": [\n        { \"option_text\": \"First Law\", \"is_correct\": false, \"sort_order\": 0 },\n        { \"option_text\": \"Second Law (F=ma)\", \"is_correct\": true, \"sort_order\": 1 },\n        { \"option_text\": \"Third Law\", \"is_correct\": false, \"sort_order\": 2 },\n        { \"option_text\": \"Gravitation\", \"is_correct\": false, \"sort_order\": 3 }\n    ],\n    \"explanation\": \"Updated explanation with more detail...\",\n    \"tags\": [\"neet-2025\", \"mechanics\", \"updated\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "✅ Questions — Workflow",
+			"description": "Status transitions: Draft → Review → Approved/Rejected. Clone, bulk ops.",
+			"item": [
+				{
+					"name": "Submit for Review",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}/submit-review",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}", "submit-review"]
+						}
+					}
+				},
+				{
+					"name": "Approve Question",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}/approve",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}", "approve"]
+						}
+					}
+				},
+				{
+					"name": "Reject Question",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"reason\": \"Missing explanation. Options A and C are too similar. Please revise and resubmit.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}/reject",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}", "reject"]
+						}
+					}
+				},
+				{
+					"name": "Clone Question",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+									"pm.test('Cloned as draft', function () {",
+									"    pm.expect(jsonData.data.status).to.eql('draft');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}/clone",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}", "clone"]
+						}
+					}
+				},
+				{
+					"name": "Bulk Status Update",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_ids\": [1, 2, 3, 4, 5],\n    \"status\": \"approved\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/bulk-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "bulk-status"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📥 Import",
+			"description": "Excel bulk import: upload, poll status, download errors.",
+			"item": [
+				{
+					"name": "Download Template",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import/template",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import", "template"]
+						}
+					}
+				},
+				{
+					"name": "Upload Excel File",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.batch_id) {",
+									"    pm.collectionVariables.set('batch_id', jsonData.batch_id);",
+									"    console.log('batch_id set to: ' + jsonData.batch_id);",
+									"}",
+									"pm.test('Status 202 Accepted', function () {",
+									"    pm.response.to.have.status(202);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "",
+									"description": "Select your .xlsx file"
+								},
+								{
+									"key": "dry_run",
+									"value": "0",
+									"type": "text",
+									"description": "Set to 1 to validate without importing"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import"]
+						}
+					}
+				},
+				{
+					"name": "Poll Import Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+									"pm.test('Has progress', function () {",
+									"    pm.expect(jsonData).to.have.property('progress_percent');",
+									"});",
+									"console.log('Import: ' + jsonData.status + ' — ' + jsonData.progress_percent + '%');"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import/{{batch_id}}/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import", "{{batch_id}}", "status"]
+						}
+					}
+				},
+				{
+					"name": "Download Error Report (JSON)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import/{{batch_id}}/errors?format=json",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import", "{{batch_id}}", "errors"],
+							"query": [
+								{ "key": "format", "value": "json", "description": "json or xlsx" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Download Error Report (Excel)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import/{{batch_id}}/errors?format=xlsx",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import", "{{batch_id}}", "errors"],
+							"query": [
+								{ "key": "format", "value": "xlsx" }
+							]
+						}
+					}
+				},
+				{
+					"name": "List Import Batches",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import/batches?status=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import", "batches"],
+							"query": [
+								{ "key": "status", "value": "", "description": "pending,processing,completed,failed,partial" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Rollback Import Batch",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/import/{{batch_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "import", "{{batch_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Stats & Search",
+			"description": "Dashboard stats, aggregations, advanced search for exam paper generation.",
+			"item": [
+				{
+					"name": "Dashboard Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions-stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions-stats"]
+						}
+					}
+				},
+				{
+					"name": "Filter Aggregations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions-stats/aggregations?subject_id=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions-stats", "aggregations"],
+							"query": [
+								{ "key": "subject_id", "value": "", "description": "Optional: scope counts to a subject" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Advanced Search (Exam Paper Builder)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"criteria\": [\n        {\n            \"subject_id\": {{subject_id}},\n            \"topic_id\": {{topic_id}},\n            \"type\": \"mcq\",\n            \"difficulty\": \"easy\",\n            \"count\": 10\n        },\n        {\n            \"subject_id\": {{subject_id}},\n            \"type\": \"mcq\",\n            \"difficulty\": \"hard\",\n            \"count\": 5\n        },\n        {\n            \"subject_id\": {{subject_id}},\n            \"type\": \"true_false\",\n            \"difficulty\": \"medium\",\n            \"count\": 5\n        },\n        {\n            \"subject_id\": {{subject_id}},\n            \"type\": \"long_answer\",\n            \"difficulty\": \"hard\",\n            \"count\": 3\n        }\n    ],\n    \"exclude_ids\": [],\n    \"randomize\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions-search",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions-search"]
+						}
+					}
+				},
+				{
+					"name": "Question Performance Stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/questions/{{question_id}}/performance",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "questions", "{{question_id}}", "performance"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
