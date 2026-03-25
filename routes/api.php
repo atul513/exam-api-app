@@ -30,6 +30,14 @@ use App\Http\Controllers\Api\V1\{
     QuestionStatsController,
 };
 
+
+use App\Http\Controllers\Api\V1\{
+    QuizCategoryController,
+    QuizController,
+    QuizAttemptController,
+};
+
+
 // ==================
 // PUBLIC ROUTES
 // ==================
@@ -180,5 +188,39 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::get('questions-stats', [QuestionStatsController::class, 'index']);
     Route::get('questions-stats/aggregations', [QuestionStatsController::class, 'aggregations']);
     Route::post('questions-search', [QuestionStatsController::class, 'advancedSearch']);
+
+
+    // ── Quiz Categories ──
+    Route::apiResource('quiz-categories', QuizCategoryController::class);
+
+    // ── Quizzes (Admin CRUD) ──
+    Route::apiResource('quizzes', QuizController::class);
+    Route::post('quizzes/{quiz}/publish', [QuizController::class, 'publish']);
+    Route::post('quizzes/{quiz}/archive', [QuizController::class, 'archive']);
+    Route::post('quizzes/{quiz}/duplicate', [QuizController::class, 'duplicate']);
+
+    // ── Quiz Questions Management ──
+    Route::get('quizzes/{quiz}/questions', [QuizController::class, 'questions']);
+    Route::post('quizzes/{quiz}/questions/sync', [QuizController::class, 'syncQuestions']);
+
+    // ── Quiz Schedules ──
+    Route::get('quizzes/{quiz}/schedules', [QuizController::class, 'schedules']);
+    Route::post('quizzes/{quiz}/schedules/sync', [QuizController::class, 'syncSchedules']);
+
+    // ── Student: Attempt Flow ──
+    Route::get('quizzes/{quiz}/check-access', [QuizAttemptController::class, 'checkAccess']);
+    Route::post('quizzes/{quiz}/start', [QuizAttemptController::class, 'start']);
+    Route::get('attempts/{attempt}', [QuizAttemptController::class, 'show']);
+    Route::post('attempts/{attempt}/answer', [QuizAttemptController::class, 'saveAnswer']);
+    Route::post('attempts/{attempt}/submit', [QuizAttemptController::class, 'submit']);
+    Route::get('attempts/{attempt}/result', [QuizAttemptController::class, 'result']);
+
+    // ── Leaderboard ──
+    Route::get('quizzes/{quiz}/leaderboard', [QuizController::class, 'leaderboard']);
+
+    // ── My Attempts (student dashboard) ──
+    Route::get('my/attempts', [QuizAttemptController::class, 'myAttempts']);
+    Route::get('my/quizzes', [QuizAttemptController::class, 'myQuizzes']);
+
 });
 

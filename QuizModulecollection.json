@@ -1,0 +1,694 @@
+{
+	"info": {
+		"_postman_id": "quiz-module-api-2026",
+		"name": "Quiz & Exam Module API",
+		"description": "Complete Quiz & Exam Module for Exam App.\n\nSetup:\n1. Import the 'Question Bank API' collection first (for auth + questions)\n2. Set `base_url` variable to your Laravel server URL\n3. Run 'Login' from Question Bank collection to get token\n4. Create a Subject → Topic → Questions first, then build quizzes\n\nCovers: Categories, Quiz CRUD (4-step), Schedules, Student Attempt Flow, Leaderboard",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+		{ "key": "token", "value": "", "type": "string" },
+		{ "key": "category_id", "value": "1", "type": "string" },
+		{ "key": "quiz_id", "value": "1", "type": "string" },
+		{ "key": "schedule_id", "value": "1", "type": "string" },
+		{ "key": "attempt_id", "value": "1", "type": "string" },
+		{ "key": "question_id_1", "value": "1", "type": "string" },
+		{ "key": "question_id_2", "value": "2", "type": "string" },
+		{ "key": "question_id_3", "value": "3", "type": "string" },
+		{ "key": "subject_id", "value": "1", "type": "string" },
+		{ "key": "topic_id", "value": "1", "type": "string" }
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+	},
+	"item": [
+		{
+			"name": "📂 Quiz Categories",
+			"item": [
+				{
+					"name": "List Categories",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.length > 0) pm.collectionVariables.set('category_id', d.data[0].id);",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));"
+							]
+						}
+					}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quiz-categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quiz-categories"]
+						}
+					}
+				},
+				{
+					"name": "Create Category",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.id) pm.collectionVariables.set('category_id', d.data.id);",
+								"pm.test('Status 201', () => pm.response.to.have.status(201));"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"NEET Mock Tests\",\n    \"slug\": \"neet-mock-tests\",\n    \"description\": \"Practice tests for NEET exam preparation\",\n    \"sort_order\": 1,\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quiz-categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quiz-categories"]
+						}
+					}
+				},
+				{
+					"name": "Create Sub-Category",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Physics Mock Tests\",\n    \"slug\": \"physics-mock-tests\",\n    \"parent_id\": {{category_id}},\n    \"sort_order\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quiz-categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quiz-categories"]
+						}
+					}
+				},
+				{
+					"name": "Get Category Detail",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quiz-categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quiz-categories", "{{category_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Category",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"NEET 2026 Mock Tests\",\n    \"description\": \"Updated description\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quiz-categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quiz-categories", "{{category_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Category",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quiz-categories/{{category_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quiz-categories", "{{category_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📝 Quiz — Create (Full 4-Step)",
+			"description": "Create a complete quiz with details, settings, questions, and schedules in one request.",
+			"item": [
+				{
+					"name": "Create FREE Public Quiz (all 4 steps)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.id) {",
+								"    pm.collectionVariables.set('quiz_id', d.data.id);",
+								"    console.log('quiz_id set to: ' + d.data.id);",
+								"}",
+								"pm.test('Status 201', () => pm.response.to.have.status(201));",
+								"pm.test('Has questions', () => pm.expect(d.data.total_questions).to.be.above(0));"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Physics Chapter Test — Newton's Laws\",\n    \"category_id\": {{category_id}},\n    \"type\": \"quiz\",\n    \"access_type\": \"free\",\n    \"description\": \"A quick 10-question quiz on Newton's three laws of motion.\",\n    \"visibility\": \"public\",\n\n    \"duration_mode\": \"manual\",\n    \"total_duration_min\": 15,\n    \"marks_mode\": \"question_wise\",\n    \"negative_marking\": true,\n    \"negative_marks_per_question\": 0.25,\n    \"pass_percentage\": 40,\n    \"shuffle_questions\": true,\n    \"shuffle_options\": true,\n    \"max_attempts\": 3,\n    \"disable_finish_button\": false,\n    \"enable_question_list_view\": true,\n    \"hide_solutions\": false,\n    \"show_leaderboard\": true,\n    \"show_result_immediately\": true,\n    \"allow_review_after_submit\": true,\n    \"auto_submit_on_timeout\": true,\n\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"sort_order\": 0 },\n        { \"question_id\": {{question_id_2}}, \"sort_order\": 1 },\n        { \"question_id\": {{question_id_3}}, \"sort_order\": 2 }\n    ],\n\n    \"schedules\": [\n        {\n            \"title\": \"Morning Batch\",\n            \"starts_at\": \"2026-04-01T09:00:00Z\",\n            \"ends_at\": \"2026-04-01T12:00:00Z\",\n            \"grace_period_min\": 5\n        },\n        {\n            \"title\": \"Evening Batch\",\n            \"starts_at\": \"2026-04-01T18:00:00Z\",\n            \"ends_at\": \"2026-04-01T21:00:00Z\",\n            \"grace_period_min\": 5\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes"]
+						}
+					}
+				},
+				{
+					"name": "Create PAID Private Exam (with sections)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.id) pm.collectionVariables.set('quiz_id', d.data.id);",
+								"pm.test('Status 201', () => pm.response.to.have.status(201));"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"NEET Full Mock Test #1\",\n    \"category_id\": {{category_id}},\n    \"type\": \"exam\",\n    \"access_type\": \"paid\",\n    \"price\": 99.00,\n    \"description\": \"Full-length NEET mock exam with Physics, Chemistry, and Biology sections.\",\n    \"visibility\": \"private\",\n\n    \"duration_mode\": \"manual\",\n    \"total_duration_min\": 180,\n    \"marks_mode\": \"fixed\",\n    \"fixed_marks_per_question\": 4,\n    \"negative_marking\": true,\n    \"negative_marks_per_question\": 1,\n    \"pass_percentage\": 50,\n    \"shuffle_questions\": false,\n    \"shuffle_options\": false,\n    \"max_attempts\": 1,\n    \"disable_finish_button\": true,\n    \"enable_question_list_view\": true,\n    \"hide_solutions\": true,\n    \"show_leaderboard\": true,\n    \"show_result_immediately\": false,\n    \"allow_review_after_submit\": false,\n    \"auto_submit_on_timeout\": true,\n\n    \"sections\": [\n        { \"title\": \"Section A: Physics\", \"instructions\": \"Attempt all 45 questions.\", \"sort_order\": 0 },\n        { \"title\": \"Section B: Chemistry\", \"instructions\": \"Attempt all 45 questions.\", \"sort_order\": 1 },\n        { \"title\": \"Section C: Biology\", \"instructions\": \"Attempt all 90 questions.\", \"sort_order\": 2 }\n    ],\n\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"section_id\": null, \"sort_order\": 0, \"marks_override\": 4 },\n        { \"question_id\": {{question_id_2}}, \"section_id\": null, \"sort_order\": 1, \"marks_override\": 4 },\n        { \"question_id\": {{question_id_3}}, \"section_id\": null, \"sort_order\": 2, \"marks_override\": 4 }\n    ],\n\n    \"schedules\": [\n        {\n            \"title\": \"Exam Window\",\n            \"starts_at\": \"2026-04-15T09:00:00Z\",\n            \"ends_at\": \"2026-04-15T15:00:00Z\",\n            \"grace_period_min\": 10,\n            \"user_group_ids\": []\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes"]
+						}
+					}
+				},
+				{
+					"name": "Create Minimal Quiz (details + settings only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Quick Practice Quiz\",\n    \"type\": \"quiz\",\n    \"access_type\": \"free\",\n    \"visibility\": \"public\",\n    \"duration_mode\": \"manual\",\n    \"total_duration_min\": 10,\n    \"marks_mode\": \"question_wise\",\n    \"negative_marking\": false,\n    \"pass_percentage\": 33\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📋 Quiz — CRUD & Management",
+			"item": [
+				{
+					"name": "List Quizzes (with filters)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.length > 0) pm.collectionVariables.set('quiz_id', d.data[0].id);",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));"
+							]
+						}
+					}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes?type=&status=&visibility=&access_type=&category_id=&search=&sort_by=created_at&sort_order=desc&page=1&per_page=25",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes"],
+							"query": [
+								{ "key": "type", "value": "", "description": "quiz or exam" },
+								{ "key": "status", "value": "", "description": "draft, published, archived" },
+								{ "key": "visibility", "value": "", "description": "public or private" },
+								{ "key": "access_type", "value": "", "description": "free or paid" },
+								{ "key": "category_id", "value": "", "description": "Filter by category" },
+								{ "key": "search", "value": "", "description": "Search by title" },
+								{ "key": "sort_by", "value": "created_at" },
+								{ "key": "sort_order", "value": "desc" },
+								{ "key": "page", "value": "1" },
+								{ "key": "per_page", "value": "25" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Quiz Detail",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Quiz (settings only)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Physics Test — Updated\",\n    \"pass_percentage\": 50,\n    \"shuffle_questions\": false,\n    \"max_attempts\": 5,\n    \"show_leaderboard\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Quiz Questions (replace all)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"sort_order\": 0 },\n        { \"question_id\": {{question_id_2}}, \"sort_order\": 1 },\n        { \"question_id\": {{question_id_3}}, \"sort_order\": 2 }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Quiz Schedules (replace all)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"schedules\": [\n        {\n            \"title\": \"Window 1\",\n            \"starts_at\": \"2026-05-01T08:00:00Z\",\n            \"ends_at\": \"2026-05-01T12:00:00Z\",\n            \"grace_period_min\": 10\n        },\n        {\n            \"title\": \"Window 2\",\n            \"starts_at\": \"2026-05-01T14:00:00Z\",\n            \"ends_at\": \"2026-05-01T18:00:00Z\",\n            \"grace_period_min\": 5\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Publish Quiz",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/publish",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "publish"]
+						}
+					}
+				},
+				{
+					"name": "Archive Quiz",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/archive",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "archive"]
+						}
+					}
+				},
+				{
+					"name": "Delete Quiz",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Quiz Questions",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Get Quiz Schedules",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/schedules",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "schedules"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🎯 Student — Attempt Flow",
+			"description": "Full student flow: check access → start → answer questions → submit → view result.\n\nRun these in order to simulate a complete quiz attempt.",
+			"item": [
+				{
+					"name": "1. Check Access",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));",
+								"console.log('Access allowed: ' + d.allowed + ' — ' + d.reason);"
+							]
+						}
+					}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/check-access",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "check-access"]
+						}
+					}
+				},
+				{
+					"name": "2. Start Quiz (creates attempt)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.attempt_id) {",
+								"    pm.collectionVariables.set('attempt_id', d.data.attempt_id);",
+								"    console.log('attempt_id set to: ' + d.data.attempt_id);",
+								"    console.log('Remaining seconds: ' + d.data.remaining_seconds);",
+								"    console.log('Total questions: ' + d.data.total_questions);",
+								"}",
+								"pm.test('Status 201 or 200', () => {",
+								"    pm.expect([200, 201]).to.include(pm.response.code);",
+								"});"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/start",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "start"]
+						}
+					}
+				},
+				{
+					"name": "3a. Save Answer — MCQ",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_1}},\n    \"selected_option_ids\": [2],\n    \"time_spent_sec\": 25,\n    \"is_bookmarked\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "3b. Save Answer — Multi-Select",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_2}},\n    \"selected_option_ids\": [5, 7, 9],\n    \"time_spent_sec\": 40,\n    \"is_bookmarked\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "3c. Save Answer — True/False",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_3}},\n    \"selected_option_ids\": [10],\n    \"time_spent_sec\": 8\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "3d. Save Answer — Short Answer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_1}},\n    \"text_answer\": \"H2O\",\n    \"time_spent_sec\": 12\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "3e. Save Answer — Fill in the Blank",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_2}},\n    \"fill_blank_answers\": {\n        \"1\": \"Jupiter\",\n        \"2\": \"Mercury\"\n    },\n    \"time_spent_sec\": 30\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "3f. Save Answer — Match the Column",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_3}},\n    \"match_pairs_answer\": {\n        \"1\": \"3\",\n        \"2\": \"1\",\n        \"3\": \"4\",\n        \"4\": \"2\"\n    },\n    \"time_spent_sec\": 45\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "3g. Save Answer — Long Answer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_1}},\n    \"text_answer\": \"Photosynthesis is the process by which green plants convert light energy into chemical energy. The process occurs in two main stages: light-dependent reactions in the thylakoid membranes where water is split and ATP/NADPH are produced, and light-independent reactions (Calvin Cycle) in the stroma where CO2 is fixed into glucose. The overall equation is: 6CO2 + 6H2O + light → C6H12O6 + 6O2.\",\n    \"time_spent_sec\": 180\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "answer"]
+						}
+					}
+				},
+				{
+					"name": "4. Submit Quiz",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));",
+								"if (d.data) {",
+								"    console.log('Score: ' + d.data.final_score + ' | ' + d.data.percentage + '%');",
+								"    console.log('Passed: ' + d.data.is_passed);",
+								"    console.log('Correct: ' + d.data.correct_count + ' | Incorrect: ' + d.data.incorrect_count);",
+								"}"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/submit",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "submit"]
+						}
+					}
+				},
+				{
+					"name": "5. View Full Result",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}/result",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}", "result"]
+						}
+					}
+				},
+				{
+					"name": "Get Attempt Detail",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/attempts/{{attempt_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "attempts", "{{attempt_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🏆 Leaderboard",
+			"item": [
+				{
+					"name": "Get Quiz Leaderboard",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/quizzes/{{quiz_id}}/leaderboard",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "quizzes", "{{quiz_id}}", "leaderboard"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👤 My Dashboard (Student)",
+			"item": [
+				{
+					"name": "My Attempts",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/my/attempts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "my", "attempts"]
+						}
+					}
+				},
+				{
+					"name": "My Available Quizzes",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/my/quizzes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "my", "quizzes"]
+						}
+					}
+				}
+			]
+		}
+	]
+}
