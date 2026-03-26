@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use App\Models\{Question, Subject, Topic, Tag, ImportBatch};
 use App\Services\QuestionCacheService;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\DemoImportExport;
 
 // ─────────────────────────────────────────────────────────────
 // php artisan questionbank:flush-cache
@@ -151,3 +153,43 @@ Artisan::command('questionbank:stats', function () {
     return 0;
 
 })->purpose('Show question bank statistics and health check');
+
+
+Artisan::command(
+    'questionbank:generate-demo-excel {--subject= : Subject code} {--topic= : Topic code}',
+    function () {
+        $subjectCode = $this->option('subject');
+        $topicCode = $this->option('topic');
+
+        // Auto-detect first subject/topic if not provided
+        if (!$subjectCode) {
+            $subject = Subject::first();
+            if (!$subject) {
+                $this->error('No subjects found. Create a subject first: php artisan tinker → Subject::create([...])');
+                return 1;
+            }
+            $subjectCode = $subject->code;
+            $this->line("Using subject: {$subject->name} ({$subjectCode})");
+        }
+
+        if (!$topicCode) {
+            $subject = Subject::where('code', $subjectCode)->first();
+            $topic = Topic::where('subject_id', $subject?->id)->first();
+            if (!$topic) {
+                $this->error("No topics found for subject '{$subjectCode}'. Create a topic first.");
+                return 1;
+            }
+            $topicCode = $topic->code;
+            $this->line("Using topic: {$topic->name} ({$topicCode})");
+        }
+
+        $path = 'demo-import.xlsx';
+        Excel::store(new DemoImportExport($subjectCode, $topicCode), $path, 'local');
+
+        $fullPath = storage_path("app/{$path}");
+        $this->info("Demo Excel created: {$fullPath}");
+        $this->line('Upload it via: POST /api/v1/questions/import');
+
+        return 0;
+    }
+)->purpose('Generate a demo Excel file for testing question import');

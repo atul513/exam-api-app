@@ -171,7 +171,7 @@ class GradingService
             'incorrect_count'     => $answers->where('is_correct', false)->count(),
             'skipped_count'       => $answers->filter(fn($a) => !$a->isAnswered())->count(),
             'submitted_at'        => $attempt->submitted_at ?? now(),
-            'time_spent_sec'      => now()->diffInSeconds($attempt->started_at),
+            'time_spent_sec'      => max(0, (int) $attempt->started_at->diffInSeconds(now())),
         ]);
     }
 

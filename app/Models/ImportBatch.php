@@ -26,6 +26,13 @@ class ImportBatch extends Model
         'completed_at' => 'datetime',
     ];
 
+    protected $appends = ['imported'];
+
+    public function getImportedAttribute(): int
+    {
+        return $this->success_count ?? 0;
+    }
+
     public function importer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'imported_by');

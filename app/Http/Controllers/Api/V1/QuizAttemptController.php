@@ -146,7 +146,7 @@ class QuizAttemptController extends Controller
         $attempt->update([
             'status'       => AttemptStatus::Submitted,
             'submitted_at' => now(),
-            'time_spent_sec' => now()->diffInSeconds($attempt->started_at),
+            'time_spent_sec' => max(0, (int) $attempt->started_at->diffInSeconds(now())),
         ]);
 
         // Grade
@@ -158,6 +158,23 @@ class QuizAttemptController extends Controller
                 'id', 'status', 'final_score', 'percentage', 'is_passed',
                 'correct_count', 'incorrect_count', 'skipped_count', 'rank',
             ]),
+        ]);
+    }
+
+    /**
+     * Get current state of an attempt (in-progress or completed).
+     */
+    public function show(Request $request, QuizAttempt $attempt): JsonResponse
+    {
+        if ($attempt->user_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $quiz = $attempt->quiz;
+        $attempt->load('answers');
+
+        return response()->json([
+            'data' => $this->formatAttemptForStudent($attempt, $quiz),
         ]);
     }
 
