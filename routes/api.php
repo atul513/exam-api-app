@@ -37,7 +37,7 @@ use App\Http\Controllers\Api\V1\{
     QuizAttemptController,
 };
 
-
+use App\Http\Controllers\Api\V1\PracticeSetController;
 // ==================
 // PUBLIC ROUTES
 // ==================
@@ -221,6 +221,24 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     // ── My Attempts (student dashboard) ──
     Route::get('my/attempts', [QuizAttemptController::class, 'myAttempts']);
     Route::get('my/quizzes', [QuizAttemptController::class, 'myQuizzes']);
+
+
+
+
+    // ── Practice Sets (Admin) ──
+    Route::apiResource('practice-sets', PracticeSetController::class);
+    Route::post('practice-sets/{practiceSet}/publish', [PracticeSetController::class, 'publish']);
+    Route::get('practice-sets/{practiceSet}/questions', [PracticeSetController::class, 'questions']);
+
+    // ── Practice Sets (Student) ──
+    Route::get('practice-sets/{practiceSet}/start', [PracticeSetController::class, 'start']);
+    Route::post('practice-sets/{practiceSet}/check-answer', [PracticeSetController::class, 'checkAnswer']);
+    Route::get('practice-sets/{practiceSet}/progress', [PracticeSetController::class, 'progress']);
+
+    // ── Reward Points ──
+    Route::get('my/reward-points', [PracticeSetController::class, 'myRewardPoints']);
+
+
 
 });
 

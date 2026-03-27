@@ -1,0 +1,414 @@
+{
+	"info": {
+		"_postman_id": "practice-set-api-2026",
+		"name": "Practice Set API",
+		"description": "Practice Set module with reward points.\n\nSetup: Use token from Question Bank collection. Create questions first.\n\nFlow: Admin creates set → adds questions → publishes → Student starts → answers one by one → gets instant feedback + reward points.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+		{ "key": "token", "value": "", "type": "string" },
+		{ "key": "practice_set_id", "value": "1", "type": "string" },
+		{ "key": "question_id_1", "value": "1", "type": "string" },
+		{ "key": "question_id_2", "value": "2", "type": "string" },
+		{ "key": "question_id_3", "value": "3", "type": "string" },
+		{ "key": "subject_id", "value": "1", "type": "string" },
+		{ "key": "topic_id", "value": "1", "type": "string" },
+		{ "key": "category_id", "value": "1", "type": "string" }
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+	},
+	"item": [
+		{
+			"name": "📝 Admin — CRUD",
+			"item": [
+				{
+					"name": "Create Practice Set (with rewards + questions)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.id) {",
+								"    pm.collectionVariables.set('practice_set_id', d.data.id);",
+								"    console.log('practice_set_id: ' + d.data.id);",
+								"}",
+								"pm.test('Status 201', () => pm.response.to.have.status(201));"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Physics Practice — Newton's Laws\",\n    \"category_id\": {{category_id}},\n    \"subject_id\": {{subject_id}},\n    \"topic_id\": {{topic_id}},\n    \"description\": \"Practice questions on Newton's three laws of motion.\",\n    \"access_type\": \"free\",\n    \"status\": \"draft\",\n\n    \"allow_reward_points\": true,\n    \"points_mode\": \"auto\",\n    \"show_reward_popup\": true,\n\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"sort_order\": 0 },\n        { \"question_id\": {{question_id_2}}, \"sort_order\": 1 },\n        { \"question_id\": {{question_id_3}}, \"sort_order\": 2 }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets"]
+						}
+					}
+				},
+				{
+					"name": "Create Practice Set (paid + manual points)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Premium Chemistry Practice\",\n    \"category_id\": {{category_id}},\n    \"subject_id\": {{subject_id}},\n    \"description\": \"Premium practice set with manual point rewards.\",\n    \"access_type\": \"paid\",\n    \"price\": 49.00,\n    \"status\": \"draft\",\n\n    \"allow_reward_points\": true,\n    \"points_mode\": \"manual\",\n    \"points_per_question\": 5,\n    \"show_reward_popup\": true,\n\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"sort_order\": 0, \"points_override\": 10 },\n        { \"question_id\": {{question_id_2}}, \"sort_order\": 1 },\n        { \"question_id\": {{question_id_3}}, \"sort_order\": 2, \"points_override\": 15 }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets"]
+						}
+					}
+				},
+				{
+					"name": "Create Practice Set (no rewards)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Quick Practice — No Rewards\",\n    \"subject_id\": {{subject_id}},\n    \"access_type\": \"free\",\n    \"status\": \"draft\",\n    \"allow_reward_points\": false,\n    \"points_mode\": \"auto\",\n    \"show_reward_popup\": false,\n\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"sort_order\": 0 }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets"]
+						}
+					}
+				},
+				{
+					"name": "List Practice Sets (with filters)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data && d.data.length > 0) pm.collectionVariables.set('practice_set_id', d.data[0].id);",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));"
+							]
+						}
+					}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets?status=&access_type=&category_id=&subject_id=&topic_id=&search=&sort_by=created_at&sort_order=desc&page=1&per_page=25",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets"],
+							"query": [
+								{ "key": "status", "value": "", "description": "draft or published" },
+								{ "key": "access_type", "value": "", "description": "free or paid" },
+								{ "key": "category_id", "value": "" },
+								{ "key": "subject_id", "value": "" },
+								{ "key": "topic_id", "value": "" },
+								{ "key": "search", "value": "", "description": "Search by title" },
+								{ "key": "sort_by", "value": "created_at" },
+								{ "key": "sort_order", "value": "desc" },
+								{ "key": "page", "value": "1" },
+								{ "key": "per_page", "value": "25" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Practice Set Detail",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Practice Set",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Physics Practice — Updated\",\n    \"allow_reward_points\": true,\n    \"points_mode\": \"manual\",\n    \"points_per_question\": 10,\n    \"show_reward_popup\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Questions (replace all)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"questions\": [\n        { \"question_id\": {{question_id_1}}, \"sort_order\": 0, \"points_override\": 5 },\n        { \"question_id\": {{question_id_2}}, \"sort_order\": 1 },\n        { \"question_id\": {{question_id_3}}, \"sort_order\": 2, \"points_override\": 10 }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Publish Practice Set",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/publish",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "publish"]
+						}
+					}
+				},
+				{
+					"name": "Get Questions in Set",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/questions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "questions"]
+						}
+					}
+				},
+				{
+					"name": "Delete Practice Set",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🎯 Student — Practice Flow",
+			"description": "Student flow: Start → Answer question → Get instant feedback (correct/wrong + points + explanation) → Next question.\n\nNo timer, no submit. Each answer is graded immediately.",
+			"item": [
+				{
+					"name": "1. Start Practice (load questions + progress)",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data) {",
+								"    console.log('Total questions: ' + d.data.practice_set.total_questions);",
+								"    console.log('Progress: ' + JSON.stringify(d.data.summary));",
+								"}",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));"
+							]
+						}
+					}],
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/start",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "start"]
+						}
+					}
+				},
+				{
+					"name": "2a. Check Answer — MCQ",
+					"event": [{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"var d = pm.response.json();",
+								"if (d.data) {",
+								"    console.log('Correct: ' + d.data.is_correct);",
+								"    console.log('Points: ' + d.data.points_earned);",
+								"    console.log('Show popup: ' + d.data.show_popup);",
+								"}",
+								"pm.test('Status 200', () => pm.response.to.have.status(200));",
+								"pm.test('Has is_correct', () => pm.expect(d.data).to.have.property('is_correct'));",
+								"pm.test('Has explanation', () => pm.expect(d.data).to.have.property('explanation'));"
+							]
+						}
+					}],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_1}},\n    \"selected_option_ids\": [2]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/check-answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "check-answer"]
+						}
+					}
+				},
+				{
+					"name": "2b. Check Answer — Multi-Select",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_2}},\n    \"selected_option_ids\": [5, 7, 9]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/check-answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "check-answer"]
+						}
+					}
+				},
+				{
+					"name": "2c. Check Answer — True/False",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_3}},\n    \"selected_option_ids\": [10]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/check-answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "check-answer"]
+						}
+					}
+				},
+				{
+					"name": "2d. Check Answer — Short Answer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_1}},\n    \"text_answer\": \"H2O\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/check-answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "check-answer"]
+						}
+					}
+				},
+				{
+					"name": "2e. Check Answer — Fill in the Blank",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_2}},\n    \"fill_blank_answers\": {\n        \"1\": \"Jupiter\",\n        \"2\": \"Mercury\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/check-answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "check-answer"]
+						}
+					}
+				},
+				{
+					"name": "2f. Check Answer — Match Column",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question_id\": {{question_id_3}},\n    \"match_pairs_answer\": {\n        \"1\": \"1\",\n        \"2\": \"2\",\n        \"3\": \"3\",\n        \"4\": \"4\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/check-answer",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "check-answer"]
+						}
+					}
+				},
+				{
+					"name": "3. View My Progress",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/practice-sets/{{practice_set_id}}/progress",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "practice-sets", "{{practice_set_id}}", "progress"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🏅 Reward Points",
+			"item": [
+				{
+					"name": "My Reward Points",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "application/json" }],
+						"url": {
+							"raw": "{{base_url}}/api/v1/my/reward-points",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "my", "reward-points"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

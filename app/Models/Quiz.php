@@ -20,7 +20,7 @@ class Quiz extends Model
     protected $fillable = [
         // Details
         'title', 'slug', 'category_id', 'type', 'access_type',
-        'price', 'description', 'thumbnail_url', 'visibility', 'status',
+        'price', 'description', 'instructions', 'thumbnail_url', 'visibility', 'status',
         // Settings
         'duration_mode', 'total_duration_min',
         'marks_mode', 'fixed_marks_per_question',

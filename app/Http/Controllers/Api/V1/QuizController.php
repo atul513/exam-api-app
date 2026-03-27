@@ -32,6 +32,7 @@ class QuizController extends Controller
             'access_type'       => 'required|in:free,paid',
             'price'             => 'nullable|numeric|min:0|required_if:access_type,paid',
             'description'       => 'nullable|string|max:5000',
+            'instructions'      => 'nullable|string',
             'visibility'        => 'required|in:public,private',
             // Settings
             'duration_mode'     => 'required|in:manual,auto',
@@ -102,6 +103,7 @@ class QuizController extends Controller
             'access_type'       => 'sometimes|in:free,paid',
             'price'             => 'nullable|numeric|min:0',
             'description'       => 'nullable|string|max:5000',
+            'instructions'      => 'nullable|string',
             'visibility'        => 'sometimes|in:public,private',
             'duration_mode'     => 'sometimes|in:manual,auto',
             'total_duration_min' => 'nullable|integer|min:1',
