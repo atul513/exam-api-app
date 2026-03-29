@@ -180,7 +180,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==================
     Route::middleware('role:student')->prefix('student')->group(function () {
         Route::get('/dashboard', [StudentDashboard::class, 'index']);
-        Route::get('/profile',   [StudentDashboard::class, 'profile']);
     });
 
     // ==================
@@ -188,7 +187,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==================
     Route::middleware('role:parent')->prefix('parent')->group(function () {
         Route::get('/dashboard', [ParentDashboard::class, 'index']);
-        Route::get('/profile',   [ParentDashboard::class, 'profile']);
     });
 });
 

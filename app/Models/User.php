@@ -39,6 +39,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'parent_id',
         'phone_code',
         'phone',
         'avatar',
@@ -105,6 +106,18 @@ class User extends Authenticatable
     public function hasAnyRole(array $roles): bool
     {
         return in_array($this->role, $roles);
+    }
+
+    // ── Parent / Children ──
+
+    public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(User::class, 'parent_id');
     }
 
     // ── Subscriptions ──
