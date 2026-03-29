@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -32,15 +33,33 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
+        'username',
         'email',
         'password',
         'role',
+        'phone_code',
+        'phone',
+        'avatar',
+        'country',
+        'address',
+        'city',
+        'postal_code',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->avatar) return null;
+        return asset('storage/' . $this->avatar);
+    }
 
     protected function casts(): array
     {
@@ -86,5 +105,38 @@ class User extends Authenticatable
     public function hasAnyRole(array $roles): bool
     {
         return in_array($this->role, $roles);
+    }
+
+    // ── Subscriptions ──
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(UserSubscription::class);
+    }
+
+    public function activeSubscription(): ?UserSubscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest('starts_at')
+            ->first();
+    }
+
+    public function hasActivePlan(?int $planId = null): bool
+    {
+        $query = $this->subscriptions()
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            });
+
+        if ($planId) {
+            $query->where('plan_id', $planId);
+        }
+
+        return $query->exists();
     }
 }

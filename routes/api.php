@@ -38,11 +38,18 @@ use App\Http\Controllers\Api\V1\{
 };
 
 use App\Http\Controllers\Api\V1\PracticeSetController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\V1\PlanController;
+use App\Http\Controllers\Api\V1\SubscriptionController;
 // ==================
 // PUBLIC ROUTES
 // ==================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// Plans — public listing
+Route::get('/plans',       [PlanController::class, 'index']);
+Route::get('/plans/{plan}', [PlanController::class, 'show']);
 
 // ==================
 // PUBLIC BLOG ROUTES
@@ -73,6 +80,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/user',    [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    // ── Profile ──────────────────────────────────────────────────────────
+    Route::prefix('profile')->group(function () {
+        Route::get('/',             [ProfileController::class, 'show']);
+        Route::put('/',             [ProfileController::class, 'update']);
+        Route::post('/avatar',      [ProfileController::class, 'uploadAvatar']);
+        Route::delete('/avatar',    [ProfileController::class, 'removeAvatar']);
+    });
+
+    // ── My subscription (any authenticated user) ─────────────────────
+    Route::get('/my/subscription',   [SubscriptionController::class, 'myCurrent']);
+    Route::get('/my/subscriptions',  [SubscriptionController::class, 'myHistory']);
 
     // ==================
     // SUPERADMIN ROUTES
@@ -129,6 +148,22 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/{id}',                [AdminBlogCommentController::class, 'show']);
             Route::patch('/{id}/status',       [AdminBlogCommentController::class, 'updateStatus']);
             Route::delete('/{id}',             [AdminBlogCommentController::class, 'destroy']);
+        });
+
+        // ── Plans ─────────────────────────────────────────────────────────
+        Route::prefix('plans')->group(function () {
+            Route::get('/',            [PlanController::class, 'adminIndex']);
+            Route::post('/',           [PlanController::class, 'store']);
+            Route::put('/{plan}',      [PlanController::class, 'update']);
+            Route::delete('/{plan}',   [PlanController::class, 'destroy']);
+        });
+
+        // ── Subscriptions ─────────────────────────────────────────────────
+        Route::prefix('subscriptions')->group(function () {
+            Route::get('/',                               [SubscriptionController::class, 'adminIndex']);
+            Route::post('/',                              [SubscriptionController::class, 'adminStore']);
+            Route::patch('/{subscription}/status',        [SubscriptionController::class, 'updateStatus']);
+            Route::patch('/{subscription}/extend',        [SubscriptionController::class, 'extend']);
         });
     });
 

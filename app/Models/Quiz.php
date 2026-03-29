@@ -20,7 +20,7 @@ class Quiz extends Model
     protected $fillable = [
         // Details
         'title', 'slug', 'category_id', 'type', 'access_type',
-        'price', 'description', 'instructions', 'thumbnail_url', 'visibility', 'status',
+        'price', 'plan_id', 'description', 'instructions', 'thumbnail_url', 'visibility', 'status',
         // Settings
         'duration_mode', 'total_duration_min',
         'marks_mode', 'fixed_marks_per_question',
@@ -171,6 +171,19 @@ class Quiz extends Model
     {
         if (!$this->isPublished()) {
             return ['allowed' => false, 'reason' => 'Quiz is not published.'];
+        }
+
+        // ── Paid access check ──
+        if ($this->isPaid()) {
+            $user = \App\Models\User::find($userId);
+            if (!$user || !$user->hasActivePlan($this->plan_id)) {
+                return [
+                    'allowed'  => false,
+                    'reason'   => 'An active subscription is required to access this quiz.',
+                    'requires' => 'subscription',
+                    'plan_id'  => $this->plan_id,
+                ];
+            }
         }
 
         if ($this->max_attempts) {

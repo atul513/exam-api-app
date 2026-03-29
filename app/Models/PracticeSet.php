@@ -17,7 +17,7 @@ class PracticeSet extends Model
 
     protected $fillable = [
         'title', 'slug', 'category_id', 'subject_id', 'topic_id',
-        'description', 'thumbnail_url', 'access_type', 'price', 'status',
+        'description', 'thumbnail_url', 'access_type', 'price', 'plan_id', 'status',
         'allow_reward_points', 'points_mode', 'points_per_question',
         'show_reward_popup',
         'total_questions', 'created_by',
@@ -103,6 +103,27 @@ class PracticeSet extends Model
     public function isPublished(): bool
     {
         return $this->status === 'published';
+    }
+
+    public function canUserAccess(int $userId): array
+    {
+        if (!$this->isPublished()) {
+            return ['allowed' => false, 'reason' => 'Practice set is not published.'];
+        }
+
+        if ($this->access_type === AccessType::Paid) {
+            $user = \App\Models\User::find($userId);
+            if (!$user || !$user->hasActivePlan($this->plan_id)) {
+                return [
+                    'allowed'  => false,
+                    'reason'   => 'An active subscription is required to access this practice set.',
+                    'requires' => 'subscription',
+                    'plan_id'  => $this->plan_id,
+                ];
+            }
+        }
+
+        return ['allowed' => true, 'reason' => 'OK'];
     }
 
     public function recalculateTotals(): void
