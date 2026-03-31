@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\{
     QuizCategoryController,
     QuizController,
     QuizAttemptController,
+    QuizReportController,
 };
 
 use App\Http\Controllers\Api\V1\PracticeSetController;
@@ -247,6 +248,8 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('attempts/{attempt}/answer', [QuizAttemptController::class, 'saveAnswer']);
     Route::post('attempts/{attempt}/submit', [QuizAttemptController::class, 'submit']);
     Route::get('attempts/{attempt}/result', [QuizAttemptController::class, 'result']);
+    Route::get('attempts/{attempt}/report',     [QuizReportController::class, 'show']);
+    Route::get('attempts/{attempt}/report/pdf', [QuizReportController::class, 'downloadPdf']);
 
     // ── Leaderboard ──
     Route::get('quizzes/{quiz}/leaderboard', [QuizController::class, 'leaderboard']);
