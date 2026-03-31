@@ -221,13 +221,18 @@ class QuestionImportController extends Controller
             ]);
         }
 
-        ProcessQuestionImport::dispatch($batch, false);
+        ProcessQuestionImport::dispatchSync($batch, false);
+        $batch->refresh();
 
         return response()->json([
-            'message'  => 'File uploaded. Processing started.',
-            'batch_id' => $batch->id,
-            'status'   => 'pending',
-        ], 202);
+            'message'        => 'Import completed.',
+            'batch_id'       => $batch->id,
+            'status'         => $batch->status->value,
+            'total_rows'     => $batch->total_rows,
+            'success_count'  => $batch->success_count,
+            'error_count'    => $batch->error_count,
+            'errors_preview' => array_slice($batch->error_log ?? [], 0, 20),
+        ], $batch->error_count > 0 ? 200 : 201);
     }
 
     /**
