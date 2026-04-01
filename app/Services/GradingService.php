@@ -18,7 +18,11 @@ class GradingService
      */
     public function gradeAttempt(QuizAttempt $attempt): QuizAttempt
     {
-        $attempt->load(['answers.question', 'answers.quizQuestion', 'quiz']);
+        $attempt->load([
+            'answers.question' => fn($q) => $q->with(['options', 'blanks', 'matchPairs', 'expectedAnswer']),
+            'answers.quizQuestion' => fn($q) => $q->with(['quiz', 'question']),
+            'quiz',
+        ]);
 
         $hasSubjective = false;
 
@@ -70,13 +74,13 @@ class GradingService
         switch ($question->type->value) {
             case 'mcq':
             case 'true_false':
-                $correctIds = $question->options()->where('is_correct', true)->pluck('id')->toArray();
+                $correctIds = $question->options->where('is_correct', true)->pluck('id')->toArray();
                 $selected = $answer->selected_option_ids ?? [];
                 $isCorrect = count($selected) === 1 && in_array($selected[0], $correctIds);
                 break;
 
             case 'multi_select':
-                $correctIds = $question->options()->where('is_correct', true)->pluck('id')->sort()->values()->toArray();
+                $correctIds = $question->options->where('is_correct', true)->pluck('id')->sort()->values()->toArray();
                 $selected = collect($answer->selected_option_ids ?? [])->sort()->values()->toArray();
                 $isCorrect = $selected === $correctIds;
                 break;

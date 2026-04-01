@@ -327,7 +327,7 @@
 
 //     private function sheetToArray($sheet): array
 //     {
-//         $rows = $sheet->toArray(null, true, true, true);
+//         $rows = $sheet->toArray(null, false, true, true);
 //         if (empty($rows)) return [];
 
 //         $headers = array_map(fn($h) => strtolower(trim($h ?? '')), array_shift($rows));
@@ -917,7 +917,7 @@ class ProcessQuestionImport implements ShouldQueue
 
     private function sheetToArray($sheet): array
     {
-        $rows = $sheet->toArray(null, true, true, true);
+        $rows = $sheet->toArray(null, false, true, true);
         if (empty($rows)) return [];
 
         // First row = headers

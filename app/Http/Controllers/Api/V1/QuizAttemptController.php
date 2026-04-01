@@ -143,6 +143,34 @@ class QuizAttemptController extends Controller
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
+        // Bulk-save answers if provided in the submit payload
+        if ($request->has('answers')) {
+            $data = $request->validate([
+                'answers'                        => 'array',
+                'answers.*.question_id'          => 'required|integer',
+                'answers.*.selected_option_ids'  => 'nullable|array',
+                'answers.*.text_answer'          => 'nullable|string|max:50000',
+                'answers.*.fill_blank_answers'   => 'nullable|array',
+                'answers.*.match_pairs_answer'   => 'nullable|array',
+                'answers.*.time_spent_sec'       => 'nullable|integer|min:0',
+                'answers.*.is_bookmarked'        => 'nullable|boolean',
+            ]);
+
+            foreach ($data['answers'] as $ans) {
+                $answer = $attempt->answers()->where('question_id', $ans['question_id'])->first();
+                if (!$answer) continue;
+
+                $answer->update([
+                    'selected_option_ids' => $ans['selected_option_ids'] ?? $answer->selected_option_ids,
+                    'text_answer'         => $ans['text_answer'] ?? $answer->text_answer,
+                    'fill_blank_answers'  => $ans['fill_blank_answers'] ?? $answer->fill_blank_answers,
+                    'match_pairs_answer'  => $ans['match_pairs_answer'] ?? $answer->match_pairs_answer,
+                    'time_spent_sec'      => $ans['time_spent_sec'] ?? $answer->time_spent_sec,
+                    'is_bookmarked'       => $ans['is_bookmarked'] ?? $answer->is_bookmarked,
+                ]);
+            }
+        }
+
         $attempt->update([
             'status'       => AttemptStatus::Submitted,
             'submitted_at' => now(),
