@@ -40,6 +40,9 @@ use App\Http\Controllers\Api\V1\{
 
 use App\Http\Controllers\Api\V1\PracticeSetController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\HomeController;
+use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 // ==================
@@ -47,6 +50,23 @@ use App\Http\Controllers\Api\V1\SubscriptionController;
 // ==================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// Google OAuth
+Route::prefix('auth/google')->group(function () {
+    Route::get('/redirect',  [SocialAuthController::class, 'redirectToGoogle']);
+    Route::post('/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+    Route::post('/token',    [SocialAuthController::class, 'handleGoogleToken']);
+});
+
+// Contact form — public
+Route::post('/contact', [ContactController::class, 'store']);
+
+// Home page sections — public
+Route::prefix('home')->group(function () {
+    Route::get('/',               [HomeController::class, 'index']);
+    Route::get('/practice-sets',  [HomeController::class, 'practiceSets']);
+    Route::get('/exams',          [HomeController::class, 'exams']);
+});
 
 // Plans — public listing
 Route::get('/plans',       [PlanController::class, 'index']);
@@ -165,6 +185,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/',                              [SubscriptionController::class, 'adminStore']);
             Route::patch('/{subscription}/status',        [SubscriptionController::class, 'updateStatus']);
             Route::patch('/{subscription}/extend',        [SubscriptionController::class, 'extend']);
+        });
+
+        // ── Contact Submissions ───────────────────────────────────────────
+        Route::prefix('contact-submissions')->group(function () {
+            Route::get('/',                              [ContactController::class, 'index']);
+            Route::get('/{contactSubmission}',           [ContactController::class, 'show']);
+            Route::patch('/{contactSubmission}/status',  [ContactController::class, 'updateStatus']);
+            Route::delete('/{contactSubmission}',        [ContactController::class, 'destroy']);
         });
     });
 
