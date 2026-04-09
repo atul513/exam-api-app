@@ -10,26 +10,64 @@ use Illuminate\Http\JsonResponse;
 class PlanController extends Controller
 {
     /**
-     * GET /api/v1/plans
-     * Public list of active plans.
+     * GET /api/plans   (public)
+     * GET /api/v1/plans (authenticated)
+     * List all active plans. If user is logged in, each plan includes their subscription status.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         $plans = Plan::where('is_active', true)
             ->orderBy('sort_order')
             ->orderBy('price')
             ->get();
 
+        $user = $request->user();
+
+        if ($user) {
+            $mySubs = $user->subscriptions()
+                ->whereIn('plan_id', $plans->pluck('id'))
+                ->get()
+                ->keyBy('plan_id');
+
+            $plans = $plans->map(function ($plan) use ($mySubs) {
+                $sub = $mySubs->get($plan->id);
+                $plan->user_subscription = $sub ? [
+                    'status'         => $sub->status,
+                    'expires_at'     => $sub->expires_at?->toDateString(),
+                    'is_active'      => $sub->isActive(),
+                    'days_remaining' => $sub->daysRemaining(),
+                ] : null;
+                return $plan;
+            });
+        }
+
         return response()->json(['data' => $plans]);
     }
 
     /**
-     * GET /api/v1/plans/{plan}
-     * Single plan detail (public).
+     * GET /api/plans/{plan}   (public)
+     * Single plan detail. Includes user subscription status if logged in.
      */
-    public function show(Plan $plan): JsonResponse
+    public function show(Request $request, Plan $plan): JsonResponse
     {
-        return response()->json(['data' => $plan]);
+        $data = $plan->toArray();
+
+        $user = $request->user();
+        if ($user) {
+            $sub = $user->subscriptions()
+                ->where('plan_id', $plan->id)
+                ->latest()
+                ->first();
+
+            $data['user_subscription'] = $sub ? [
+                'status'         => $sub->status,
+                'expires_at'     => $sub->expires_at?->toDateString(),
+                'is_active'      => $sub->isActive(),
+                'days_remaining' => $sub->daysRemaining(),
+            ] : null;
+        }
+
+        return response()->json(['data' => $data]);
     }
 
     // ── Admin endpoints ────────────────────────────────────────────────

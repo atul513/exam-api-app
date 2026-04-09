@@ -41,6 +41,89 @@ class SubscriptionController extends Controller
         return response()->json($subs);
     }
 
+    // ── User: Subscribe ───────────────────────────────────────────────
+
+    /**
+     * POST /api/v1/plans/{plan}/subscribe
+     *
+     * Logged-in user subscribes to a plan.
+     * - Free plans → activated immediately.
+     * - Paid plans → created as 'pending'; admin activates after payment confirmation.
+     *
+     * Body (paid plans): { "payment_method": "upi|bank_transfer|card|other", "payment_reference": "TXN123" }
+     */
+    public function subscribe(Request $request, Plan $plan): JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$plan->is_active) {
+            return response()->json(['message' => 'This plan is no longer available.'], 422);
+        }
+
+        // Block if user already has an active subscription for this plan
+        $existing = UserSubscription::where('user_id', $user->id)
+            ->where('plan_id', $plan->id)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'message'  => 'You already have an active subscription for this plan.',
+                'data'     => $this->formatSub($existing->load('plan')),
+            ], 422);
+        }
+
+        $isFree = $plan->isFree();
+
+        $data = $request->validate([
+            'payment_method'    => $isFree ? 'nullable' : 'required|string|in:upi,bank_transfer,card,cash,other',
+            'payment_reference' => $isFree ? 'nullable' : 'required|string|max:255',
+        ]);
+
+        $startsAt  = now();
+        $expiresAt = $plan->isLifetime() ? null : $startsAt->copy()->addDays($plan->duration_days);
+
+        $sub = UserSubscription::create([
+            'user_id'           => $user->id,
+            'plan_id'           => $plan->id,
+            'status'            => $isFree ? 'active' : 'pending',
+            'starts_at'         => $startsAt,
+            'expires_at'        => $expiresAt,
+            'payment_method'    => $isFree ? 'free' : $data['payment_method'],
+            'payment_reference' => $data['payment_reference'] ?? null,
+            'amount_paid'       => $isFree ? 0 : $plan->price,
+        ]);
+
+        $message = $isFree
+            ? 'You have successfully subscribed to the free plan.'
+            : 'Subscription request submitted. It will be activated once your payment is verified.';
+
+        return response()->json([
+            'message' => $message,
+            'data'    => $this->formatSub($sub->load('plan')),
+        ], 201);
+    }
+
+    /**
+     * POST /api/v1/my/subscription/cancel
+     * Cancel the current user's active subscription.
+     */
+    public function cancel(Request $request): JsonResponse
+    {
+        $sub = $request->user()->activeSubscription();
+
+        if (!$sub) {
+            return response()->json(['message' => 'No active subscription to cancel.'], 422);
+        }
+
+        $sub->update(['status' => 'cancelled']);
+
+        return response()->json(['message' => 'Subscription cancelled successfully.']);
+    }
+
     // ── Admin endpoints ────────────────────────────────────────────────
 
     /**

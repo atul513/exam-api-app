@@ -111,8 +111,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ── My subscription (any authenticated user) ─────────────────────
-    Route::get('/my/subscription',   [SubscriptionController::class, 'myCurrent']);
-    Route::get('/my/subscriptions',  [SubscriptionController::class, 'myHistory']);
+    Route::get('/my/subscription',          [SubscriptionController::class, 'myCurrent']);
+    Route::get('/my/subscriptions',         [SubscriptionController::class, 'myHistory']);
+    Route::post('/my/subscription/cancel',  [SubscriptionController::class, 'cancel']);
+
+    // ── Subscribe to a plan ───────────────────────────────────────────
+    Route::post('/plans/{plan}/subscribe',  [SubscriptionController::class, 'subscribe']);
 
     // ==================
     // SUPERADMIN ROUTES
