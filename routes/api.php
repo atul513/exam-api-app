@@ -75,23 +75,24 @@ Route::get('/plans/{plan}', [PlanController::class, 'show']);
 // ==================
 // PUBLIC BLOG ROUTES
 // ==================
-Route::prefix('blogs')->group(function () {
-    Route::get('/',                      [BlogController::class, 'index']);
-    Route::get('/{slug}/related',        [BlogController::class, 'related']);
-    Route::get('/{slug}',                [BlogController::class, 'show']);
-    Route::get('/{slug}/comments',       [BlogCommentController::class, 'index']);
-    // Guest can post; auth optional (auto-approves authenticated users)
-    Route::post('/{slug}/comments',      [BlogCommentController::class, 'store']);
-});
+Route::prefix('v1')->group(function () {
+    Route::prefix('blogs')->group(function () {
+        Route::get('/',                      [BlogController::class, 'index']);
+        Route::get('/{slug}/related',        [BlogController::class, 'related']);
+        Route::get('/{slug}',                [BlogController::class, 'show']);
+        Route::get('/{slug}/comments',       [BlogCommentController::class, 'index']);
+        Route::post('/{slug}/comments',      [BlogCommentController::class, 'store']);
+    });
 
-Route::prefix('blog-categories')->group(function () {
-    Route::get('/',        [BlogCategoryController::class, 'index']);
-    Route::get('/{slug}',  [BlogCategoryController::class, 'show']);
-});
+    Route::prefix('blog-categories')->group(function () {
+        Route::get('/',        [BlogCategoryController::class, 'index']);
+        Route::get('/{slug}',  [BlogCategoryController::class, 'show']);
+    });
 
-Route::prefix('blog-tags')->group(function () {
-    Route::get('/',        [BlogTagController::class, 'index']);
-    Route::get('/{slug}',  [BlogTagController::class, 'show']);
+    Route::prefix('blog-tags')->group(function () {
+        Route::get('/',        [BlogTagController::class, 'index']);
+        Route::get('/{slug}',  [BlogTagController::class, 'show']);
+    });
 });
 
 // ==================
