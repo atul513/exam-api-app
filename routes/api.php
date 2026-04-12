@@ -38,6 +38,8 @@ use App\Http\Controllers\Api\V1\{
     QuizReportController,
 };
 
+use App\Http\Controllers\Api\V1\ExamSectionController;
+
 use App\Http\Controllers\Api\V1\PracticeSetController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\HomeController;
@@ -228,6 +230,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
+
+    // ── Exam Sections (Flexible Taxonomy) ──
+    Route::get('exam-sections/types',                          [ExamSectionController::class, 'types']);
+    Route::post('exam-sections/bulk-create',                   [ExamSectionController::class, 'bulkCreate']);
+    Route::apiResource('exam-sections', ExamSectionController::class);
+    Route::get('exam-sections/{examSection}/tree',             [ExamSectionController::class, 'tree']);
+    Route::get('exam-sections/{examSection}/content',          [ExamSectionController::class, 'content']);
+    Route::get('exam-sections/{examSection}/breadcrumb',       [ExamSectionController::class, 'breadcrumb']);
+    Route::post('exam-sections/{examSection}/link',            [ExamSectionController::class, 'link']);
+    Route::delete('exam-sections/{examSection}/unlink',        [ExamSectionController::class, 'unlink']);
 
     // Taxonomy
     Route::apiResource('subjects', SubjectController::class);

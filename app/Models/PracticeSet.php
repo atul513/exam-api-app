@@ -5,6 +5,7 @@
 namespace App\Models;
 
 use App\Enums\AccessType;
+use App\Traits\HasExamSections;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
 
 class PracticeSet extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasExamSections;
 
     protected $fillable = [
         'title', 'slug', 'category_id', 'subject_id', 'topic_id',

@@ -1,0 +1,141 @@
+
+{
+	"info": {
+		"_postman_id": "exam-taxonomy-2026",
+		"name": "Exam Taxonomy API",
+		"description": "Flexible hierarchy: Competitive exams, Academic (class-wise), State boards, Government exams, and any custom structure.\n\nSingle self-referencing table. Admin creates any depth. Quizzes/practice-sets/coding-tests can be linked to any node.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:8000" },
+		{ "key": "token", "value": "" },
+		{ "key": "group_id", "value": "1" },
+		{ "key": "exam_id", "value": "2" },
+		{ "key": "subject_section_id", "value": "3" },
+		{ "key": "chapter_section_id", "value": "4" },
+		{ "key": "quiz_id", "value": "1" }
+	],
+	"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}" }] },
+	"item": [
+		{
+			"name": "🏗️ Setup — Build JEE hierarchy",
+			"description": "Run in order to create: Competitive Exams > JEE > JEE Mains > Physics > Mechanics",
+			"item": [
+				{
+					"name": "Get Available Types",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections/types", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","types"] } }
+				},
+				{
+					"name": "1. Create Group: Competitive Exams",
+					"event": [{"listen":"test","script":{"type":"text/javascript","exec":["var d=pm.response.json();if(d.data)pm.collectionVariables.set('group_id',d.data.id);pm.test('201',()=>pm.response.to.have.status(201));"]}}],
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"name\": \"Competitive Exams\",\n    \"type\": \"exam_group\",\n    \"description\": \"All national competitive entrance exams\",\n    \"is_featured\": true,\n    \"sort_order\": 1\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"] } }
+				},
+				{
+					"name": "2. Create Exam: JEE",
+					"event": [{"listen":"test","script":{"type":"text/javascript","exec":["var d=pm.response.json();if(d.data)pm.collectionVariables.set('exam_id',d.data.id);"]}}],
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"parent_id\": {{group_id}},\n    \"name\": \"JEE (Joint Entrance Exam)\",\n    \"short_name\": \"JEE\",\n    \"code\": \"JEE\",\n    \"type\": \"exam\",\n    \"description\": \"National level engineering entrance exam conducted by NTA\",\n    \"meta\": {\n        \"full_name\": \"Joint Entrance Examination\",\n        \"conducting_body\": \"NTA\",\n        \"frequency\": \"Twice a year\",\n        \"official_website\": \"https://jeemain.nta.nic.in\"\n    },\n    \"is_featured\": true,\n    \"sort_order\": 1\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"] } }
+				},
+				{
+					"name": "3. Create Variant: JEE Mains",
+					"event": [{"listen":"test","script":{"type":"text/javascript","exec":["var d=pm.response.json();if(d.data)pm.collectionVariables.set('exam_id',d.data.id);"]}}],
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"parent_id\": {{exam_id}},\n    \"name\": \"JEE Mains\",\n    \"code\": \"JEE_MAINS\",\n    \"type\": \"exam_variant\",\n    \"description\": \"First stage of JEE for NITs, IIITs\"\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"] } }
+				},
+				{
+					"name": "4. Create Subject: Physics",
+					"event": [{"listen":"test","script":{"type":"text/javascript","exec":["var d=pm.response.json();if(d.data)pm.collectionVariables.set('subject_section_id',d.data.id);"]}}],
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"parent_id\": {{exam_id}},\n    \"name\": \"Physics\",\n    \"code\": \"JEE_PHY\",\n    \"type\": \"subject\",\n    \"meta\": { \"subject_code\": \"PHY\" },\n    \"sort_order\": 1\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"] } }
+				},
+				{
+					"name": "5. Create Chapter: Mechanics",
+					"event": [{"listen":"test","script":{"type":"text/javascript","exec":["var d=pm.response.json();if(d.data)pm.collectionVariables.set('chapter_section_id',d.data.id);"]}}],
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"parent_id\": {{subject_section_id}},\n    \"name\": \"Mechanics\",\n    \"code\": \"JEE_PHY_MECH\",\n    \"type\": \"chapter\",\n    \"meta\": { \"chapter_number\": 1 },\n    \"sort_order\": 1\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"] } }
+				}
+			]
+		},
+		{
+			"name": "🏗️ Setup — Build CBSE hierarchy",
+			"item": [
+				{
+					"name": "Bulk Create: CBSE > Class 12 > Physics > chapters",
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"sections\": [\n        { \"name\": \"CBSE\", \"type\": \"board\", \"code\": \"CBSE\" },\n        { \"name\": \"Class 12\", \"type\": \"class\", \"parent_id\": 1, \"meta\": {\"grade_number\": 12, \"stream\": \"Science\"} },\n        { \"name\": \"Physics\", \"type\": \"subject\", \"parent_id\": 2, \"code\": \"CBSE12_PHY\" },\n        { \"name\": \"Electric Charges and Fields\", \"type\": \"chapter\", \"parent_id\": 3, \"meta\": {\"chapter_number\": 1} },\n        { \"name\": \"Electrostatic Potential\", \"type\": \"chapter\", \"parent_id\": 3, \"meta\": {\"chapter_number\": 2} },\n        { \"name\": \"Current Electricity\", \"type\": \"chapter\", \"parent_id\": 3, \"meta\": {\"chapter_number\": 3} },\n        { \"name\": \"Chemistry\", \"type\": \"subject\", \"parent_id\": 2, \"code\": \"CBSE12_CHEM\" },\n        { \"name\": \"Mathematics\", \"type\": \"subject\", \"parent_id\": 2, \"code\": \"CBSE12_MATH\" }\n    ]\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections/bulk-create", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","bulk-create"] } }
+				}
+			]
+		},
+		{
+			"name": "🏗️ Setup — Build State Board",
+			"item": [
+				{
+					"name": "Bulk Create: Maharashtra Board > Class 10 > Science",
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": { "mode": "raw", "raw": "{\n    \"sections\": [\n        { \"name\": \"State Boards\", \"type\": \"exam_group\" },\n        { \"name\": \"Maharashtra Board (SSC/HSC)\", \"type\": \"state_board\", \"parent_id\": 1, \"meta\": {\"state\": \"Maharashtra\", \"state_code\": \"MH\"} },\n        { \"name\": \"Class 10 (SSC)\", \"type\": \"class\", \"parent_id\": 2, \"meta\": {\"grade_number\": 10} },\n        { \"name\": \"Science\", \"type\": \"subject\", \"parent_id\": 3 },\n        { \"name\": \"Mathematics\", \"type\": \"subject\", \"parent_id\": 3 }\n    ]\n}" }, "url": { "raw": "{{base_url}}/api/v1/exam-sections/bulk-create", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","bulk-create"] } }
+				}
+			]
+		},
+		{
+			"name": "📋 CRUD & Browse",
+			"item": [
+				{
+					"name": "List All (flat, paginated)",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections?type=&parent_id=&is_active=1&search=&page=1&per_page=50", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"], "query": [{"key":"type","value":"","description":"exam_group, exam, subject, chapter etc."},{"key":"parent_id","value":"","description":"Children of this ID"},{"key":"is_active","value":"1"},{"key":"search","value":""},{"key":"page","value":"1"},{"key":"per_page","value":"50"}] } }
+				},
+				{
+					"name": "List Roots Only (top-level groups)",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections?roots=1", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"], "query": [{"key":"roots","value":"1"}] } }
+				},
+				{
+					"name": "List as Full Tree",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections?format=tree", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"], "query": [{"key":"format","value":"tree"}] } }
+				},
+				{
+					"name": "List by Type (all exams)",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections?type=exam", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections"], "query": [{"key":"type","value":"exam"}] } }
+				},
+				{
+					"name": "Get Section Detail",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{exam_id}}", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{exam_id}}"] } }
+				},
+				{
+					"name": "Get Subtree from Node",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{exam_id}}/tree", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{exam_id}}","tree"] } }
+				},
+				{
+					"name": "Get Breadcrumb",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{chapter_section_id}}/breadcrumb", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{chapter_section_id}}","breadcrumb"] } }
+				},
+				{
+					"name": "Get All Content Under Node",
+					"request": { "method": "GET", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{exam_id}}/content?status=published", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{exam_id}}","content"], "query": [{"key":"status","value":"published"}] } }
+				},
+				{
+					"name": "Update Section",
+					"request": { "method": "PUT", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n    \"name\": \"JEE (Updated)\",\n    \"is_featured\": true,\n    \"meta\": { \"conducting_body\": \"NTA\", \"year\": 2026 }\n}"}, "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{exam_id}}", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{exam_id}}"] } }
+				},
+				{
+					"name": "Delete Section",
+					"request": { "method": "DELETE", "header": [{"key":"Accept","value":"application/json"}], "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{chapter_section_id}}", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{chapter_section_id}}"] } }
+				}
+			]
+		},
+		{
+			"name": "🔗 Linking Content",
+			"description": "Link quizzes, practice sets, or coding tests to any section node.",
+			"item": [
+				{
+					"name": "Link Quiz to Section",
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n    \"linkable_type\": \"quiz\",\n    \"linkable_id\": {{quiz_id}}\n}"}, "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{chapter_section_id}}/link", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{chapter_section_id}}","link"] } }
+				},
+				{
+					"name": "Link Practice Set to Section",
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n    \"linkable_type\": \"practice_set\",\n    \"linkable_id\": 1\n}"}, "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{subject_section_id}}/link", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{subject_section_id}}","link"] } }
+				},
+				{
+					"name": "Link Coding Test to Section",
+					"request": { "method": "POST", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n    \"linkable_type\": \"coding_test\",\n    \"linkable_id\": 1\n}"}, "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{exam_id}}/link", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{exam_id}}","link"] } }
+				},
+				{
+					"name": "Unlink Quiz from Section",
+					"request": { "method": "DELETE", "header": [{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}], "body": {"mode":"raw","raw":"{\n    \"linkable_type\": \"quiz\",\n    \"linkable_id\": {{quiz_id}}\n}"}, "url": { "raw": "{{base_url}}/api/v1/exam-sections/{{chapter_section_id}}/unlink", "host": ["{{base_url}}"], "path": ["api","v1","exam-sections","{{chapter_section_id}}","unlink"] } }
+				}
+			]
+		}
+	]
+}
