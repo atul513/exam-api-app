@@ -62,17 +62,25 @@ Route::prefix('auth/google')->group(function () {
 
 // Contact form — public
 Route::post('/contact', [ContactController::class, 'store']);
+Route::post('/v1/contact', [ContactController::class, 'store']);
 
-// Home page sections — public
+// Home page sections — public (both /api/home and /api/v1/home)
 Route::prefix('home')->group(function () {
     Route::get('/',               [HomeController::class, 'index']);
     Route::get('/practice-sets',  [HomeController::class, 'practiceSets']);
     Route::get('/exams',          [HomeController::class, 'exams']);
 });
+Route::prefix('v1/home')->group(function () {
+    Route::get('/',               [HomeController::class, 'index']);
+    Route::get('/practice-sets',  [HomeController::class, 'practiceSets']);
+    Route::get('/exams',          [HomeController::class, 'exams']);
+});
 
-// Plans — public listing
-Route::get('/plans',       [PlanController::class, 'index']);
-Route::get('/plans/{plan}', [PlanController::class, 'show']);
+// Plans — public listing (both /api/plans and /api/v1/plans)
+Route::get('/plans',           [PlanController::class, 'index']);
+Route::get('/plans/{plan}',    [PlanController::class, 'show']);
+Route::get('/v1/plans',        [PlanController::class, 'index']);
+Route::get('/v1/plans/{plan}', [PlanController::class, 'show']);
 
 // ==================
 // PUBLIC BLOG ROUTES
@@ -95,6 +103,39 @@ Route::prefix('v1')->group(function () {
         Route::get('/',        [BlogTagController::class, 'index']);
         Route::get('/{slug}',  [BlogTagController::class, 'show']);
     });
+
+    // Quiz categories — public read
+    Route::get('quiz-categories',                    [QuizCategoryController::class, 'index']);
+    Route::get('quiz-categories/{quiz_category}',    [QuizCategoryController::class, 'show']);
+
+    // Exam sections — public read
+    Route::get('exam-sections',                          [ExamSectionController::class, 'index']);
+    Route::get('exam-sections/types',                    [ExamSectionController::class, 'types']);
+    Route::get('exam-sections/{examSection}',            [ExamSectionController::class, 'show']);
+    Route::get('exam-sections/{examSection}/tree',       [ExamSectionController::class, 'tree']);
+    Route::get('exam-sections/{examSection}/content',    [ExamSectionController::class, 'content']);
+    Route::get('exam-sections/{examSection}/breadcrumb', [ExamSectionController::class, 'breadcrumb']);
+
+    // Quizzes — public read
+    Route::get('quizzes',                      [QuizController::class, 'index']);
+    Route::get('quizzes/{quiz}',               [QuizController::class, 'show']);
+    Route::get('quizzes/{quiz}/leaderboard',   [QuizController::class, 'leaderboard']);
+
+    // Practice sets — public read
+    Route::get('practice-sets',                [PracticeSetController::class, 'index']);
+    Route::get('practice-sets/{practiceSet}',  [PracticeSetController::class, 'show']);
+
+    // Subjects & Topics — public read (for filters/dropdowns)
+    Route::get('subjects',                     [SubjectController::class, 'index']);
+    Route::get('subjects/{subject}',           [SubjectController::class, 'show']);
+    Route::get('subjects/{subject}/topics',    [TopicController::class, 'index']);
+    Route::get('topics/{topic}',               [TopicController::class, 'show']);
+
+    // Tags — public read
+    Route::get('tags',                         [TagController::class, 'index']);
+
+    // Quiz schedules — public read
+    Route::get('quizzes/{quiz}/schedules',     [QuizController::class, 'schedules']);
 });
 
 // ==================
