@@ -72,6 +72,54 @@ class ExamSectionService
         ];
     }
 
+    /**
+     * Build full hierarchy: roots → all nested children.
+     * Optionally filter root type (e.g. exam, board).
+     */
+    public function hierarchy(array $filters = []): array
+    {
+        $query = ExamSection::query()->roots()->active()->orderBy('sort_order')->orderBy('name');
+
+        if (!empty($filters['type'])) {
+            $query->ofType($filters['type']);
+        }
+        if (!empty($filters['search'])) {
+            $query->search($filters['search']);
+        }
+        if (isset($filters['is_featured'])) {
+            $query->where('is_featured', $filters['is_featured']);
+        }
+
+        $roots = $query->with(['allChildren' => fn($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
+            ->withCount('children')
+            ->get();
+
+        return $roots->map(fn($root) => $this->formatNode($root))->toArray();
+    }
+
+    private function formatNode(ExamSection $node): array
+    {
+        $data = [
+            'id'        => $node->id,
+            'name'      => $node->name,
+            'slug'      => $node->slug,
+            'type'      => $node->type,
+            'icon_url'  => $node->icon_url,
+            'image_url' => $node->image_url,
+            'depth'     => $node->depth,
+        ];
+
+        if ($node->relationLoaded('allChildren') && $node->allChildren->isNotEmpty()) {
+            $data['children'] = $node->allChildren
+                ->map(fn($child) => $this->formatNode($child))
+                ->toArray();
+        } else {
+            $data['children'] = [];
+        }
+
+        return $data;
+    }
+
     public static function availableTypes(): array
     {
         return [

@@ -21,6 +21,18 @@ class ExamSectionController extends Controller
     }
 
     /**
+     * GET /api/v1/exam-sections/hierarchy
+     * Full nested tree: exam → class → subject → chapter → topic
+     * Supports: ?type=exam&search=jee&is_featured=1
+     */
+    public function hierarchy(Request $request): JsonResponse
+    {
+        $tree = $this->service->hierarchy($request->all());
+
+        return response()->json(['data' => $tree]);
+    }
+
+    /**
      * GET /api/v1/exam-sections
      * Supports: ?type=exam&parent_id=1&roots=1&search=jee&format=tree&is_active=1
      */

@@ -111,6 +111,7 @@ Route::prefix('v1')->group(function () {
     // Exam sections — public read
     Route::get('exam-sections',                          [ExamSectionController::class, 'index']);
     Route::get('exam-sections/types',                    [ExamSectionController::class, 'types']);
+    Route::get('exam-sections/hierarchy',                [ExamSectionController::class, 'hierarchy']);
     Route::get('exam-sections/{examSection}',            [ExamSectionController::class, 'show']);
     Route::get('exam-sections/{examSection}/tree',       [ExamSectionController::class, 'tree']);
     Route::get('exam-sections/{examSection}/content',    [ExamSectionController::class, 'content']);
