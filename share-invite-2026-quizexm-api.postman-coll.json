@@ -1,0 +1,488 @@
+{
+    "info": {
+        "_postman_id": "share-invite-2026",
+        "name": "Share & Invite API",
+        "description": "Share quizzes/exams/practice sets via public links and personal invites.\nChannels: Email, WhatsApp, SMS, Copy Link.\nTracking: full funnel (invited → opened → registered → attempted → completed).",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        { "key": "base_url", "value": "http://localhost:8000" },
+        { "key": "token", "value": "" },
+        { "key": "quiz_id", "value": "1" },
+        { "key": "share_code", "value": "" },
+        { "key": "invite_code", "value": "" },
+        { "key": "invitation_id", "value": "1" },
+        { "key": "share_link_id", "value": "1" }
+    ],
+    "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{token}}" }]
+    },
+    "item": [
+        {
+            "name": "🔗 Public Share Link",
+            "item": [
+                {
+                    "name": "Create Share Link (for a quiz)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var d=pm.response.json();",
+                                    "if(d.data){",
+                                    "  pm.collectionVariables.set('share_code',d.data.share_code);",
+                                    "  pm.collectionVariables.set('share_link_id',d.data.share_code);",
+                                    "  console.log('Share URL: '+d.data.url);",
+                                    "  console.log('WhatsApp: '+d.data.whatsapp_url);",
+                                    "}",
+                                    "pm.test('200',()=>pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content_type\": \"quiz\",\n    \"content_id\": {{quiz_id}},\n    \"title\": \"Physics Mock Test — Try it now!\",\n    \"message\": \"Test your Newton's Laws knowledge. Good luck!\",\n    \"require_registration\": true,\n    \"expires_at\": \"2026-12-31T23:59:59Z\",\n    \"max_registrations\": 100\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/create-link",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "share", "create-link"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Share Link (practice set)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content_type\": \"practice_set\",\n    \"content_id\": 1,\n    \"title\": \"Daily Practice — Physics\",\n    \"require_registration\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/create-link",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "share", "create-link"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Share Link (coding test)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content_type\": \"coding_test\",\n    \"content_id\": 1,\n    \"title\": \"Python Skills Test\",\n    \"require_registration\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/create-link",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "share", "create-link"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Share Link",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"title\": \"Updated Title\",\n    \"max_registrations\": 500,\n    \"expires_at\": \"2027-06-30T23:59:59Z\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/link/{{share_link_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "link",
+                                "{{share_link_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Deactivate Share Link",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/link/{{share_link_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "link",
+                                "{{share_link_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "✉️ Personal Invites",
+            "item": [
+                {
+                    "name": "Send Invites — Email + WhatsApp (multiple recipients)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var d=pm.response.json();",
+                                    "console.log('Sent: '+d.data.sent+', Skipped: '+d.data.skipped);",
+                                    "pm.test('200',()=>pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content_type\": \"quiz\",\n    \"content_id\": {{quiz_id}},\n    \"channels\": [\"email\", \"whatsapp\"],\n    \"message\": \"Hi! Please attempt this quiz before Friday. All the best!\",\n    \"recipients\": [\n        {\n            \"name\": \"Rahul Sharma\",\n            \"email\": \"rahul@example.com\",\n            \"phone\": \"919876543210\"\n        },\n        {\n            \"name\": \"Priya Patel\",\n            \"email\": \"priya@example.com\",\n            \"phone\": \"919876543211\"\n        },\n        {\n            \"name\": \"Amit Kumar\",\n            \"email\": \"amit@example.com\",\n            \"phone\": \"919876543212\"\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/send-invites",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "share", "send-invites"]
+                        }
+                    }
+                },
+                {
+                    "name": "Send Invites — SMS only",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content_type\": \"quiz\",\n    \"content_id\": {{quiz_id}},\n    \"channels\": [\"sms\"],\n    \"message\": \"Attempt the quiz now!\",\n    \"recipients\": [\n        { \"name\": \"Student 1\", \"phone\": \"919876543220\" },\n        { \"name\": \"Student 2\", \"phone\": \"919876543221\" }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/send-invites",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "share", "send-invites"]
+                        }
+                    }
+                },
+                {
+                    "name": "Send Invites — All channels",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"content_type\": \"practice_set\",\n    \"content_id\": 1,\n    \"channels\": [\"email\", \"whatsapp\", \"sms\"],\n    \"message\": \"Practice these questions before the exam!\",\n    \"recipients\": [\n        {\n            \"name\": \"Test Student\",\n            \"email\": \"test@example.com\",\n            \"phone\": \"919876543230\",\n            \"expires_at\": \"2026-05-01T00:00:00Z\"\n        }\n    ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/send-invites",
+                            "host": ["{{base_url}}"],
+                            "path": ["api", "v1", "share", "send-invites"]
+                        }
+                    }
+                },
+                {
+                    "name": "List Invitations (for a quiz)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var d=pm.response.json();",
+                                    "if(d.data&&d.data.length>0){",
+                                    "  pm.collectionVariables.set('invitation_id',d.data[0].id);",
+                                    "  pm.collectionVariables.set('invite_code',d.data[0].invite_code);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/invitations/quiz/{{quiz_id}}?status=",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "invitations",
+                                "quiz",
+                                "{{quiz_id}}"
+                            ],
+                            "query": [
+                                {
+                                    "key": "status",
+                                    "value": "",
+                                    "description": "pending,sent,opened,registered,attempted,completed,expired,cancelled"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Resend Invite",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/resend/{{invitation_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "resend",
+                                "{{invitation_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Cancel Invite",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/cancel/{{invitation_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "cancel",
+                                "{{invitation_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "📊 Analytics",
+            "item": [
+                {
+                    "name": "Get Share Analytics (quiz)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/analytics/quiz/{{quiz_id}}",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "analytics",
+                                "quiz",
+                                "{{quiz_id}}"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Share Analytics (practice set)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/analytics/practice_set/1",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "analytics",
+                                "practice_set",
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "🌐 Public Endpoints (no auth)",
+            "description": "These are called by the frontend when someone clicks a share/invite link. No authentication required.",
+            "item": [
+                {
+                    "name": "Resolve Share Link (public page)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var d=pm.response.json();",
+                                    "console.log('Valid: '+d.valid);",
+                                    "if(d.content)console.log('Content: '+d.content.title);"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/share/{{share_code}}/resolve?src=whatsapp",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "share",
+                                "{{share_code}}",
+                                "resolve"
+                            ],
+                            "query": [
+                                {
+                                    "key": "src",
+                                    "value": "whatsapp",
+                                    "description": "Source: email, whatsapp, sms, direct"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Resolve Invite Link (personal page)",
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "GET",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/invite/{{invite_code}}/resolve?src=email",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "invite",
+                                "{{invite_code}}",
+                                "resolve"
+                            ],
+                            "query": [{ "key": "src", "value": "email" }]
+                        }
+                    }
+                },
+                {
+                    "name": "Register via Invite Link",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "var d=pm.response.json();",
+                                    "if(d.token){",
+                                    "  pm.collectionVariables.set('token',d.token);",
+                                    "  console.log('Registered! Token saved. Redirect to: '+JSON.stringify(d.redirect_to));",
+                                    "}",
+                                    "pm.test('201',()=>pm.response.to.have.status(201));"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": { "type": "noauth" },
+                        "method": "POST",
+                        "header": [
+                            { "key": "Accept", "value": "application/json" },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"New Student\",\n    \"email\": \"newstudent@example.com\",\n    \"phone\": \"919876543299\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/v1/invite/{{invite_code}}/register",
+                            "host": ["{{base_url}}"],
+                            "path": [
+                                "api",
+                                "v1",
+                                "invite",
+                                "{{invite_code}}",
+                                "register"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

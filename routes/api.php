@@ -47,6 +47,8 @@ use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
+
+use App\Http\Controllers\Api\V1\ShareInviteController;
 // ==================
 // PUBLIC ROUTES
 // ==================
@@ -362,6 +364,22 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::get('my/reward-points', [PracticeSetController::class, 'myRewardPoints']);
 
 
+     // ── Share & Invite (Admin/Teacher) ──
+    Route::post('share/create-link', [ShareInviteController::class, 'createShareLink']);
+    Route::post('share/send-invites', [ShareInviteController::class, 'sendInvites']);
+    Route::get('share/analytics/{contentType}/{contentId}', [ShareInviteController::class, 'analytics']);
+    Route::get('share/invitations/{contentType}/{contentId}', [ShareInviteController::class, 'listInvitations']);
+    Route::post('share/resend/{invitation}', [ShareInviteController::class, 'resend']);
+    Route::post('share/cancel/{invitation}', [ShareInviteController::class, 'cancel']);
+    Route::put('share/link/{shareLink}', [ShareInviteController::class, 'updateShareLink']);
+    Route::delete('share/link/{shareLink}', [ShareInviteController::class, 'deactivateShareLink']);
+
+    // ── Public (no auth required) ──
+    Route::withoutMiddleware(['auth:sanctum'])->group(function () {
+        Route::get('share/{shareCode}/resolve', [ShareInviteController::class, 'resolveShareLink']);
+        Route::get('invite/{inviteCode}/resolve', [ShareInviteController::class, 'resolveInvite']);
+        Route::post('invite/{inviteCode}/register', [ShareInviteController::class, 'registerViaInvite']);
+    });
 
 });
 

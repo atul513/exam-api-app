@@ -8,6 +8,7 @@ namespace App\Models;
 
 use App\Enums\{QuizType, QuizStatus, AccessType, Visibility};
 use App\Traits\HasExamSections;
+use App\Traits\HasShareLinks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany};
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
 
 class Quiz extends Model
 {
-    use SoftDeletes, HasExamSections;
+    use SoftDeletes, HasExamSections, HasShareLinks;
 
     protected $fillable = [
         // Details
