@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
 // ─────────────────────────────────────────────────────────────
 // FILE: database/migrations/2026_04_01_000004_create_notification_logs_table.php
 // Tracks all sent notifications (email, WhatsApp, SMS)

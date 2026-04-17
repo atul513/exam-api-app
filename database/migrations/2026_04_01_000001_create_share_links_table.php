@@ -1,11 +1,13 @@
-/ ─────────────────────────────────────────────────────────────
-// FILE: database/migrations/2026_04_01_000001_create_share_links_table.php
-// Public shareable links (one per quiz/content)
-// ─────────────────────────────────────────────────────────────
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+
+// ─────────────────────────────────────────────────────────────
+// FILE: database/migrations/2026_04_01_000001_create_share_links_table.php
+// Public shareable links (one per quiz/content)
+// ─────────────────────────────────────────────────────────────
 
 return new class extends Migration
 {

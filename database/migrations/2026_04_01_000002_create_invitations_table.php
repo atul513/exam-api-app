@@ -1,9 +1,9 @@
-
-// ─────────────────────────────────────────────────────────────
-// FILE: database/migrations/2026_04_01_000002_create_invitations_table.php
-// Personal invites (one per person per content)
-// ─────────────────────────────────────────────────────────────
 <?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
 return new class extends Migration
 {
     public function up(): void

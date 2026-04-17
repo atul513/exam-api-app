@@ -1,5 +1,9 @@
 <?php
 
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
 // ─────────────────────────────────────────────────────────────
 // FILE: database/migrations/2026_04_01_000003_create_share_link_clicks_table.php
 // Track every click on share/invite links
