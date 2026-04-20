@@ -52,5 +52,9 @@ class DatabaseSeeder extends Seeder
                 $userData
             );
         }
+
+        $this->call([
+            PlanSeeder::class,
+        ]);
     }
 }
