@@ -49,6 +49,8 @@ use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\SubscriptionController;
 
 use App\Http\Controllers\Api\V1\ShareInviteController;
+use App\Http\Controllers\Api\V1\PdfImportController;
+
 // ==================
 // PUBLIC ROUTES
 // ==================
@@ -380,6 +382,16 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         Route::get('invite/{inviteCode}/resolve', [ShareInviteController::class, 'resolveInvite']);
         Route::post('invite/{inviteCode}/register', [ShareInviteController::class, 'registerViaInvite']);
     });
+
+    Route::prefix('pdf-imports')->group(function () {
+        Route::get('/',                             [PdfImportController::class, 'index']);
+        Route::post('/',                            [PdfImportController::class, 'upload']);
+        Route::get('{import}/status',               [PdfImportController::class, 'status']);
+        Route::get('{import}/questions',            [PdfImportController::class, 'questions']);
+        Route::post('{import}/bulk-approve',        [PdfImportController::class, 'bulkApprove']);
+        Route::post('{import}/import-approved',     [PdfImportController::class, 'importApproved']);
+    });
+    Route::put('pdf-import-questions/{question}',   [PdfImportController::class, 'updateQuestion']);
 
 });
 
