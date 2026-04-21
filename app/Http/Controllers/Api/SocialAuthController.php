@@ -43,7 +43,7 @@ class SocialAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')
                 ->stateless()
-                ->getUser();
+                ->user();
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Invalid or expired Google authorization code.',

@@ -33,8 +33,10 @@ class QuizReportController extends Controller
 
         $pdf = Pdf::loadView('reports.quiz-attempt', compact('report'))
             ->setPaper('a4', 'portrait')
-            ->setOption('defaultFont', 'sans-serif')
-            ->setOption('isRemoteEnabled', false);
+            ->setOption('defaultFont', 'DejaVu Sans')
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('chroot', public_path());
 
         $filename = 'quiz-report-' . $attempt->id . '-' . now()->format('Ymd') . '.pdf';
 
@@ -68,13 +70,13 @@ class QuizReportController extends Controller
             'user:id,name,email,avatar',
             'answers' => fn($q) => $q->with([
                 'question' => fn($q2) => $q2->with([
-                    'options:id,question_id,option_text,is_correct,sort_order',
+                    'options:id,question_id,option_text,option_media,is_correct,sort_order',
                     'blanks:id,question_id,blank_number,correct_answers,is_case_sensitive',
                     'matchPairs:id,question_id,column_a_text,column_b_text,sort_order',
                     'expectedAnswer:id,question_id,answer_text,keywords',
                     'subject:id,name',
                     'topic:id,name',
-                ])->select('id', 'type', 'difficulty', 'question_text', 'marks', 'negative_marks',
+                ])->select('id', 'type', 'difficulty', 'question_text', 'question_media', 'marks', 'negative_marks',
                            'explanation', 'solution_approach', 'subject_id', 'topic_id'),
                 'quizQuestion:id,marks_override,negative_marks_override,sort_order',
             ])->orderBy('id'),
@@ -148,11 +150,14 @@ class QuizReportController extends Controller
             ];
 
             // Always include correct answer in the report (it's a post-submission document)
-            $detail['correct_answer']    = $this->formatCorrectAnswer($q);
-            $detail['options']           = $q?->options?->map(fn($o) => [
-                'id'         => $o->id,
-                'text'       => $o->option_text,
-                'is_correct' => $o->is_correct,
+            $detail['question_media']    = $q?->question_media ?? [];
+            $detail['correct_answer']   = $this->formatCorrectAnswer($q);
+            $detail['options']          = $q?->options?->map(fn($o) => [
+                'id'           => $o->id,
+                'text'         => $o->option_text,
+                'media'        => $o->option_media ?? [],
+                'is_correct'   => $o->is_correct,
+                'is_selected'  => in_array($o->id, (array) ($ans->selected_option_ids ?? [])),
             ]);
             $detail['explanation']       = $q?->explanation;
             $detail['solution_approach'] = $q?->solution_approach;
@@ -212,6 +217,33 @@ class QuizReportController extends Controller
             'breakdown_by_subject'    => $bySubject,
             'questions'               => $questionDetails,
         ];
+    }
+
+    /**
+     * Convert a storage URL to an absolute path so DomPDF can read it
+     * without needing an HTTP request (more reliable than isRemoteEnabled).
+     * Falls back to the original URL if the file doesn't exist locally.
+     */
+    public static function resolveImageUrl(?string $url): ?string
+    {
+        if (!$url) return null;
+
+        // Already a data URI
+        if (str_starts_with($url, 'data:')) return $url;
+
+        // Map /storage/... → absolute path
+        $appUrl = rtrim(config('app.url'), '/');
+        if (str_starts_with($url, $appUrl . '/storage/')) {
+            $relative = str_replace($appUrl . '/storage/', '', $url);
+            $path     = storage_path('app/public/' . $relative);
+            if (file_exists($path)) {
+                $mime = mime_content_type($path);
+                $b64  = base64_encode(file_get_contents($path));
+                return "data:{$mime};base64,{$b64}";
+            }
+        }
+
+        return $url;
     }
 
     private function isAnswered($ans): bool

@@ -81,7 +81,22 @@
   .q-num { font-size: 11px; font-weight: 700; color: #64748b; }
   .q-body { padding: 10px 12px; }
   .q-text { font-size: 12px; color: #0f172a; line-height: 1.6; margin-bottom: 8px; }
+  .q-text p { margin: 4px 0; }
+  .q-text img { max-width: 100%; height: auto; display: block; margin: 6px 0; }
   .q-meta { font-size: 9px; color: #94a3b8; margin-bottom: 6px; }
+
+  /* ── Question Media ── */
+  .q-media img { max-width: 100%; max-height: 180px; height: auto; display: block; margin: 6px 0; border-radius: 4px; border: 1px solid #e2e8f0; }
+
+  /* ── Options List ── */
+  .options-list { margin: 8px 0; }
+  .option-row { display: block; padding: 5px 8px; border-radius: 4px; margin-bottom: 4px; border: 1px solid #e2e8f0; font-size: 11px; line-height: 1.5; }
+  .option-correct  { background: #f0fdf4; border-color: #86efac; }
+  .option-wrong    { background: #fef2f2; border-color: #fca5a5; }
+  .option-neutral  { background: #f8fafc; }
+  .option-letter   { font-weight: 700; margin-right: 6px; display: inline-block; min-width: 16px; }
+  .option-text p   { display: inline; margin: 0; }
+  .option-text img { max-width: 80px; max-height: 60px; vertical-align: middle; margin-left: 4px; }
 
   /* ── Answer Boxes ── */
   .answer-table { width: 100%; border-collapse: separate; border-spacing: 6px; margin-top: 6px; }
@@ -89,11 +104,14 @@
   .ans-correct  { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 8px; }
   .ans-label { font-size: 9px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px; }
   .ans-value { font-size: 11px; color: #0f172a; line-height: 1.5; }
+  .ans-value p { margin: 2px 0; }
 
   /* ── Explanation ── */
   .expl-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; padding: 8px 10px; margin-top: 8px; }
   .expl-label { font-size: 9px; font-weight: 700; color: #92400e; margin-bottom: 3px; }
   .expl-text { font-size: 11px; color: #451a03; line-height: 1.5; }
+  .expl-text p { margin: 3px 0; }
+  .expl-text img { max-width: 100%; height: auto; display: block; margin: 4px 0; }
   .solution-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 4px; padding: 8px 10px; margin-top: 6px; }
   .solution-label { font-size: 9px; font-weight: 700; color: #0369a1; margin-bottom: 3px; }
   .feedback-box { background: #f5f3ff; border: 1px solid #c4b5fd; border-radius: 4px; padding: 8px 10px; margin-top: 6px; }
@@ -134,7 +152,7 @@
     <tr>
       <td style="vertical-align:middle;">
         <div class="{{ $passed ? 'verdict-passed' : 'verdict-failed' }}">
-          {{ $passed ? '✓  PASSED' : '✗  FAILED' }}
+          {{ $passed ? '&#x2713;  PASSED' : '&#x2717;  FAILED' }}
         </div>
         <div class="pass-mark">Pass mark: {{ $report['quiz']['pass_percentage'] }}%</div>
       </td>
@@ -160,7 +178,7 @@
       <td><div class="info-cell"><div class="info-label">Started At</div><div class="info-value" style="font-size:10px;">{{ $report['attempt']['started_at'] }}</div></div></td>
       <td><div class="info-cell"><div class="info-label">Submitted At</div><div class="info-value" style="font-size:10px;">{{ $report['attempt']['submitted_at'] }}</div></div></td>
       <td><div class="info-cell"><div class="info-label">Time Spent</div><div class="info-value">{{ $report['attempt']['time_spent'] }}</div></div></td>
-      <td><div class="info-cell"><div class="info-label">Rank</div><div class="info-value">{{ $report['score_summary']['rank'] ? '#'.$report['score_summary']['rank'] : '—' }}</div></div></td>
+      <td><div class="info-cell"><div class="info-label">Rank</div><div class="info-value">{{ $report['score_summary']['rank'] ? '#'.$report['score_summary']['rank'] : '&#x2014;' }}</div></div></td>
     </tr>
     @if($report['quiz']['category'])
     <tr>
@@ -265,6 +283,8 @@
 <div class="section page-break" style="margin-top:14px;">
   <div class="section-title">Question-by-Question Review</div>
 
+  @php $optionLetters = ['A','B','C','D','E','F','G','H']; @endphp
+
   @foreach($report['questions'] as $q)
   <div class="q-card no-break">
 
@@ -275,7 +295,7 @@
           <td style="vertical-align:middle;">
             <span class="q-num">Q{{ $q['number'] }}</span>
             @if($q['subject'])
-              &nbsp;<span style="font-size:9px; color:#64748b;">{{ $q['subject'] }}{{ $q['topic'] ? ' › '.$q['topic'] : '' }}</span>
+              &nbsp;<span style="font-size:9px; color:#64748b;">{{ $q['subject'] }}{{ $q['topic'] ? ' &rsaquo; '.$q['topic'] : '' }}</span>
             @endif
           </td>
           <td style="text-align:right; vertical-align:middle;">
@@ -283,9 +303,9 @@
               <span class="badge badge-{{ $q['difficulty'] }}">{{ ucfirst($q['difficulty']) }}</span>&nbsp;
             @endif
             <span class="badge badge-{{ $q['status'] }}">
-              @if($q['status'] === 'correct') ✓ Correct
-              @elseif($q['status'] === 'incorrect') ✗ Incorrect
-              @else — Skipped
+              @if($q['status'] === 'correct') &#x2713; Correct
+              @elseif($q['status'] === 'incorrect') &#x2717; Incorrect
+              @else &mdash; Skipped
               @endif
             </span>&nbsp;
             <span class="badge badge-marks">{{ $q['marks_awarded'] }} / {{ $q['max_marks'] }} marks</span>
@@ -296,7 +316,23 @@
 
     {{-- Body --}}
     <div class="q-body">
-      <div class="q-text">{!! nl2br(e($q['question_text'])) !!}</div>
+
+      {{-- Question text — render as HTML (supports <img>, <b>, <i>, etc.) --}}
+      <div class="q-text">{!! $q['question_text'] !!}</div>
+
+      {{-- Question media images --}}
+      @if(!empty($q['question_media']))
+      <div class="q-media">
+        @foreach($q['question_media'] as $media)
+          @if(!empty($media['url']))
+            @php $imgSrc = \App\Http\Controllers\Api\V1\QuizReportController::resolveImageUrl($media['url']); @endphp
+            @if($imgSrc)
+            <img src="{{ $imgSrc }}" alt="{{ $media['alt'] ?? 'Image' }}">
+            @endif
+          @endif
+        @endforeach
+      </div>
+      @endif
 
       {{-- Marks meta --}}
       <div class="marks-row">
@@ -307,7 +343,40 @@
         @if($q['visit_count'] > 1) &nbsp;|&nbsp; Revisited: {{ $q['visit_count'] }}x @endif
       </div>
 
-      {{-- Answer boxes --}}
+      {{-- Options (MCQ / multi_select / true_false) --}}
+      @if(!empty($q['options']))
+      <div class="options-list" style="margin-top:8px;">
+        @foreach($q['options'] as $idx => $opt)
+          @php
+            $isCorrect  = $opt['is_correct'] ?? false;
+            $isSelected = $opt['is_selected'] ?? false;
+            $rowClass   = $isCorrect ? 'option-correct'
+                        : ($isSelected ? 'option-wrong' : 'option-neutral');
+          @endphp
+          <div class="option-row {{ $rowClass }}">
+            <span class="option-letter">{{ $optionLetters[$idx] ?? ($idx+1) }}.</span>
+            <span class="option-text">{!! $opt['text'] !!}</span>
+            {{-- Option image if any --}}
+            @if(!empty($opt['media']))
+              @foreach($opt['media'] as $om)
+                @if(!empty($om['url']))
+                  @php $omSrc = \App\Http\Controllers\Api\V1\QuizReportController::resolveImageUrl($om['url']); @endphp
+                  @if($omSrc)<img src="{{ $omSrc }}" alt="option image" style="max-height:50px; max-width:80px; vertical-align:middle;">@endif
+                @endif
+              @endforeach
+            @endif
+            @if($isCorrect)
+              <span style="float:right; color:#16a34a; font-weight:700; font-size:10px;">&#x2713; Correct</span>
+            @elseif($isSelected)
+              <span style="float:right; color:#dc2626; font-size:10px;">Your answer</span>
+            @endif
+          </div>
+        @endforeach
+      </div>
+      @endif
+
+      {{-- For non-option question types: show answer boxes --}}
+      @if(empty($q['options']))
       <table class="answer-table" cellpadding="0" cellspacing="6" style="margin-top:8px;">
         <tr>
           <td style="width:50%;">
@@ -328,7 +397,7 @@
               <div class="ans-label">Correct Answer</div>
               <div class="ans-value">
                 @if(empty($q['correct_answer']))
-                  <span style="color:#94a3b8;">—</span>
+                  <span style="color:#94a3b8;">&mdash;</span>
                 @else
                   {!! nl2br(e($q['correct_answer'])) !!}
                 @endif
@@ -338,19 +407,20 @@
           @endif
         </tr>
       </table>
+      @endif
 
       {{-- Explanation --}}
       @if(array_key_exists('explanation', $q) && !empty($q['explanation']))
       <div class="expl-box">
         <div class="expl-label">Explanation</div>
-        <div class="expl-text">{!! nl2br(e($q['explanation'])) !!}</div>
+        <div class="expl-text">{!! $q['explanation'] !!}</div>
       </div>
       @endif
 
       @if(array_key_exists('solution_approach', $q) && !empty($q['solution_approach']))
       <div class="solution-box">
         <div class="solution-label">Solution Approach</div>
-        <div class="expl-text">{!! nl2br(e($q['solution_approach'])) !!}</div>
+        <div class="expl-text">{!! $q['solution_approach'] !!}</div>
       </div>
       @endif
 
@@ -369,7 +439,7 @@
 {{-- ══ FOOTER ══ --}}
 <table class="footer-table" cellpadding="0" cellspacing="0">
   <tr>
-    <td>{{ $report['student']['name'] }} — {{ $report['quiz']['title'] }}</td>
+    <td>{{ $report['student']['name'] }} &mdash; {{ $report['quiz']['title'] }}</td>
     <td style="text-align:right;">Attempt #{{ $report['attempt']['attempt_number'] }} &nbsp;|&nbsp; {{ $report['attempt']['submitted_at'] }}</td>
   </tr>
 </table>
