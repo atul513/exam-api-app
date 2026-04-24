@@ -85,6 +85,8 @@ Route::get('/plans',           [PlanController::class, 'index']);
 Route::get('/plans/{plan}',    [PlanController::class, 'show']);
 Route::get('/v1/plans',        [PlanController::class, 'index']);
 Route::get('/v1/plans/{plan}', [PlanController::class, 'show']);
+Route::get('/contact-details', [ContactController::class, 'details']);
+Route::get('/v1/contact-details', [ContactController::class, 'details']);
 
 // ==================
 // PUBLIC BLOG ROUTES
@@ -303,6 +305,7 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
 
     // Import
     Route::post('questions/import', [QuestionImportController::class, 'upload']);
+    Route::post('questions/import-json', [QuestionImportController::class, 'uploadJson']);
     Route::get('questions/import/template', [QuestionImportController::class, 'downloadTemplate']);
     Route::get('questions/import/{batch}/status', [QuestionImportController::class, 'status']);
     Route::get('questions/import/{batch}/errors', [QuestionImportController::class, 'errors']);
@@ -394,4 +397,3 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::put('pdf-import-questions/{question}',   [PdfImportController::class, 'updateQuestion']);
 
 });
-

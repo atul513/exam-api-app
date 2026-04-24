@@ -174,6 +174,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\{ImportBatch, Subject, Topic};
 use App\Jobs\ProcessQuestionImport;
+use App\Services\JsonQuestionImportService;
 use App\Exports\{ImportTemplateExport, ImportErrorExport};
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -181,6 +182,60 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class QuestionImportController extends Controller
 {
+    /**
+     * POST /api/v1/questions/import-json
+     * Upload a JSON file of questions. Subject & topic are chosen up-front
+     * (the frontend provides subject_id + topic_id) and override any codes
+     * inside the JSON items.
+     */
+    public function uploadJson(Request $request, JsonQuestionImportService $jsonImporter): JsonResponse
+    {
+        $data = $request->validate([
+            'file'       => 'required|file|mimes:json,txt|max:20480',
+            'subject_id' => 'required|integer|exists:subjects,id',
+            'topic_id'   => 'required|integer|exists:topics,id',
+        ]);
+
+        // Ensure topic belongs to subject
+        $topicBelongs = Topic::where('id', $data['topic_id'])
+            ->where('subject_id', $data['subject_id'])
+            ->exists();
+        if (!$topicBelongs) {
+            return response()->json([
+                'message' => 'The selected topic does not belong to the selected subject.',
+            ], 422);
+        }
+
+        $file = $request->file('file');
+        $path = $file->store('imports/questions-json', 'local');
+
+        $batch = ImportBatch::create([
+            'file_name'       => $file->getClientOriginalName(),
+            'file_path'       => $path,
+            'file_size_bytes' => $file->getSize(),
+            'status'          => 'pending',
+            'imported_by'     => $request->user()->id,
+        ]);
+
+        $batch = $jsonImporter->process(
+            $batch,
+            (int) $data['subject_id'],
+            (int) $data['topic_id'],
+            $request->user()->id,
+        );
+
+        return response()->json([
+            'message'        => 'JSON import completed.',
+            'batch_id'       => $batch->id,
+            'status'         => $batch->status->value,
+            'total_rows'     => $batch->total_rows,
+            'success_count'  => $batch->success_count,
+            'error_count'    => $batch->error_count,
+            'errors_preview' => array_slice($batch->error_log ?? [], 0, 20),
+            'summary'        => $batch->summary,
+        ], $batch->error_count > 0 ? 200 : 201);
+    }
+
     /**
      * POST /api/v1/questions/import
      */

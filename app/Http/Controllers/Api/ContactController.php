@@ -11,6 +11,23 @@ use Illuminate\Support\Facades\Http;
 class ContactController extends Controller
 {
     /**
+     * GET /api/contact-details
+     * Public endpoint for contact page details.
+     */
+    public function details(): JsonResponse
+    {
+        return response()->json([
+            'data' => [
+                'email' => config('contact.email'),
+                'phone' => config('contact.phone'),
+                'phone_link' => config('contact.phone_link'),
+                'address_lines' => config('contact.address_lines', []),
+                'response_time' => config('contact.response_time'),
+                'working_hours' => config('contact.working_hours'),
+            ],
+        ]);
+    }
+    /**
      * POST /api/contact
      * Public endpoint — no auth required.
      */

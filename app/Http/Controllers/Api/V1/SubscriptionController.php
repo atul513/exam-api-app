@@ -50,7 +50,7 @@ class SubscriptionController extends Controller
      * - Free plans → activated immediately.
      * - Paid plans → created as 'pending'; admin activates after payment confirmation.
      *
-     * Body (paid plans): { "payment_method": "upi|bank_transfer|card|other", "payment_reference": "TXN123" }
+     * Body (paid plans): { "payment_method": "upi|bank_transfer|card|other", "payment_reference": "TXN123", "payment_screenshot": <file> }
      */
     public function subscribe(Request $request, Plan $plan): JsonResponse
     {
@@ -81,7 +81,13 @@ class SubscriptionController extends Controller
         $data = $request->validate([
             'payment_method'    => $isFree ? 'nullable' : 'required|string|in:upi,bank_transfer,card,cash,other',
             'payment_reference' => $isFree ? 'nullable' : 'required|string|max:255',
+            'payment_screenshot' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
+
+        $paymentScreenshotPath = null;
+        if ($request->hasFile('payment_screenshot')) {
+            $paymentScreenshotPath = $request->file('payment_screenshot')->store('subscription-payments', 'public');
+        }
 
         $startsAt  = now();
         $expiresAt = $plan->isLifetime() ? null : $startsAt->copy()->addDays($plan->duration_days);
@@ -94,6 +100,7 @@ class SubscriptionController extends Controller
             'expires_at'        => $expiresAt,
             'payment_method'    => $isFree ? 'free' : $data['payment_method'],
             'payment_reference' => $data['payment_reference'] ?? null,
+            'payment_screenshot' => $paymentScreenshotPath,
             'amount_paid'       => $isFree ? 0 : $plan->price,
         ]);
 
@@ -155,6 +162,7 @@ class SubscriptionController extends Controller
             'starts_at'         => 'nullable|date',
             'payment_reference' => 'nullable|string|max:255',
             'payment_method'    => 'nullable|string|max:50',
+            'payment_screenshot' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'amount_paid'       => 'nullable|numeric|min:0',
             'notes'             => 'nullable|string',
         ]);
@@ -166,6 +174,11 @@ class SubscriptionController extends Controller
             ? null
             : $startsAt->copy()->addDays($plan->duration_days);
 
+        $paymentScreenshotPath = null;
+        if ($request->hasFile('payment_screenshot')) {
+            $paymentScreenshotPath = $request->file('payment_screenshot')->store('subscription-payments', 'public');
+        }
+
         $sub = UserSubscription::create([
             'user_id'           => $data['user_id'],
             'plan_id'           => $data['plan_id'],
@@ -174,6 +187,7 @@ class SubscriptionController extends Controller
             'expires_at'        => $expiresAt,
             'payment_reference' => $data['payment_reference'] ?? null,
             'payment_method'    => $data['payment_method'] ?? 'manual',
+            'payment_screenshot' => $paymentScreenshotPath,
             'amount_paid'       => $data['amount_paid'] ?? $plan->price,
             'notes'             => $data['notes'] ?? null,
         ]);
@@ -243,6 +257,8 @@ class SubscriptionController extends Controller
             'days_remaining'    => $sub->daysRemaining(),
             'payment_reference' => $sub->payment_reference,
             'payment_method'    => $sub->payment_method,
+            'payment_screenshot' => $sub->payment_screenshot,
+            'payment_screenshot_url' => $sub->payment_screenshot_url,
             'amount_paid'       => $sub->amount_paid,
             'notes'             => $sub->notes,
             'plan'              => $sub->relationLoaded('plan') ? $sub->plan : null,

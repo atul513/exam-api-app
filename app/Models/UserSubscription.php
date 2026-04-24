@@ -4,19 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class UserSubscription extends Model
 {
     protected $fillable = [
         'user_id', 'plan_id', 'status',
         'starts_at', 'expires_at',
-        'payment_reference', 'payment_method', 'amount_paid', 'notes',
+        'payment_reference', 'payment_method', 'payment_screenshot', 'amount_paid', 'notes',
     ];
 
     protected $casts = [
         'starts_at'  => 'datetime',
         'expires_at' => 'datetime',
         'amount_paid' => 'decimal:2',
+    ];
+
+    protected $appends = [
+        'payment_screenshot_url',
     ];
 
     // ── Relationships ──
@@ -45,5 +50,13 @@ class UserSubscription extends Model
         if (!$this->isActive()) return 0;
         if ($this->expires_at === null) return null;   // lifetime → null
         return max(0, (int) now()->diffInDays($this->expires_at, false));
+    }
+
+    protected function paymentScreenshotUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->payment_screenshot
+            ? asset('storage/' . ltrim($this->payment_screenshot, '/'))
+            : null
+        );
     }
 }
